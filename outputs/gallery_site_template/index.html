@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tandayapa — BirdNET sound verification</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header>
+    <div class="title">
+      <h1>Tandayapa — sound verification</h1>
+      <p class="sub">BirdNET birds + custom frog classifier · day-1 pilot · play each clip and confirm the species by ear + spectrogram</p>
+    </div>
+    <div class="counts" id="counts">loading…</div>
+  </header>
+
+  <section class="controls" id="controls">
+    <div class="ctrl">
+      <label>Search species</label>
+      <input type="search" id="f-search" placeholder="common or scientific name…" list="species-list" />
+      <datalist id="species-list"></datalist>
+    </div>
+    <div class="ctrl">
+      <label>Taxon</label>
+      <select id="f-group">
+        <option value="">All taxa</option>
+        <option value="bird">Birds</option>
+        <option value="frog">Frogs</option>
+        <option value="insect">Insects</option>
+      </select>
+    </div>
+    <div class="ctrl">
+      <label>Habitat</label>
+      <select id="f-habitat"><option value="">All</option></select>
+    </div>
+    <div class="ctrl">
+      <label>Recorder</label>
+      <select id="f-recorder"><option value="">All</option></select>
+    </div>
+    <div class="ctrl">
+      <label>Time</label>
+      <select id="f-daynight">
+        <option value="">All day</option>
+        <option value="day">Day (06–18)</option>
+        <option value="night">Night (18–06)</option>
+      </select>
+    </div>
+    <div class="ctrl">
+      <label>Hour ≥ <span id="hour-val">0</span>:00</label>
+      <input type="range" id="f-hour-min" min="0" max="23" value="0" />
+    </div>
+    <div class="ctrl">
+      <label>Min confidence <span id="conf-val">0.25</span></label>
+      <input type="range" id="f-conf" min="0.25" max="1" step="0.01" value="0.25" />
+    </div>
+    <div class="ctrl">
+      <label>Sort by</label>
+      <select id="f-sort">
+        <option value="conf-desc">Confidence ↓</option>
+        <option value="conf-asc">Confidence ↑</option>
+        <option value="time-asc">Time ↑</option>
+        <option value="time-desc">Time ↓</option>
+        <option value="species">Species A–Z</option>
+      </select>
+    </div>
+    <button id="f-reset" class="reset">Reset</button>
+  </section>
+
+  <main id="grid" class="grid"></main>
+
+  <nav class="pager" id="pager"></nav>
+
+  <footer>
+    <span id="foot">Spectrogram + playhead by wavesurfer.js · audio streamed from this PC</span>
+  </footer>
+
+  <script src="./manifest.js"></script>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

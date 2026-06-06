@@ -1,0 +1,88 @@
+:root {
+  --forest: #2C5F2D; --forest-dark: #1E4220; --moss: #97BC62;
+  --cream: #F7F8F3; --gold: #D9A441; --red: #D7263D;
+  --ink: #20271f; --muted: #6b7568; --line: #d8ddd2;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; font-family: Calibri, "Segoe UI", system-ui, sans-serif;
+  color: var(--ink); background: var(--cream);
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem; padding: 14px 20px; background: var(--forest); color: #fff;
+  position: sticky; top: 0; z-index: 20;
+}
+header h1 { font-family: Georgia, serif; font-size: 1.25rem; margin: 0; }
+header .sub { margin: 2px 0 0; font-size: .82rem; opacity: .85; }
+.counts { font-size: .9rem; background: rgba(255,255,255,.15); padding: 6px 12px; border-radius: 8px; white-space: nowrap; }
+
+.controls {
+  display: flex; flex-wrap: wrap; gap: 14px 18px; align-items: flex-end;
+  padding: 14px 20px; background: #fff; border-bottom: 1px solid var(--line);
+  position: sticky; top: 58px; z-index: 15;
+}
+.ctrl { display: flex; flex-direction: column; gap: 4px; }
+.ctrl label { font-size: .72rem; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); font-weight: 700; }
+.ctrl input[type="search"] { width: 230px; }
+.ctrl input, .ctrl select {
+  padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px;
+  font-size: .92rem; background: var(--cream);
+}
+.ctrl input[type="range"] { width: 150px; padding: 0; }
+.reset {
+  margin-left: auto; align-self: center; padding: 7px 14px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--cream); border-radius: 6px; font-size: .85rem;
+}
+.reset:hover { background: #eef0e8; }
+
+.grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 14px; padding: 18px 20px;
+}
+.card {
+  background: #fff; border: 1px solid var(--line); border-radius: 10px;
+  overflow: hidden; display: flex; flex-direction: column;
+}
+.card-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+.card-head .sp { display: flex; flex-direction: column; min-width: 0; }
+.card-head .common { font-weight: 700; font-size: 1rem; }
+.card-head .sci { font-style: italic; color: var(--muted); font-size: .82rem; }
+.badge {
+  margin-left: auto; font-weight: 700; font-size: .9rem; color: #fff;
+  padding: 4px 9px; border-radius: 999px; white-space: nowrap;
+}
+.meta { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 10px; font-size: .78rem; }
+.tag { background: var(--cream); border: 1px solid var(--line); padding: 2px 8px; border-radius: 6px; color: var(--muted); }
+.tag.forest { border-color: var(--forest); color: var(--forest); }
+.tag.pasture { border-color: var(--gold); color: #9a6a14; }
+.tag.taxon-bird { border-color: #5a8a3a; color: #3f6a25; background: #f0f6ea; }
+.tag.taxon-frog { border-color: #2f8f83; color: #1d6b61; background: #e9f6f4; }
+.tag.taxon-insect { border-color: #b08410; color: #8a6410; background: #f7f0dc; }
+
+.player { border-top: 1px solid var(--line); }
+.ws-wrap { padding: 8px 10px; background: #fbfcf9; }
+.ws { width: 100%; }
+.player-bar { display: flex; align-items: center; gap: 8px; padding: 8px 10px; }
+.player-bar button {
+  cursor: pointer; border: 1px solid var(--forest); background: var(--forest);
+  color: #fff; border-radius: 6px; padding: 6px 12px; font-size: .85rem;
+}
+.player-bar button.ghost { background: #fff; color: var(--forest); }
+.player-bar button:disabled { opacity: .5; cursor: default; }
+.player-bar .time { font-size: .78rem; color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums; }
+.open-btn {
+  width: 100%; cursor: pointer; border: 0; border-top: 1px solid var(--line);
+  background: #f1f4ec; color: var(--forest); padding: 9px; font-size: .88rem; font-weight: 700;
+}
+.open-btn:hover { background: #e7ece0; }
+.hint { font-size: .74rem; color: var(--muted); padding: 0 10px 8px; }
+
+.pager { display: flex; gap: 6px; justify-content: center; align-items: center; flex-wrap: wrap; padding: 6px 20px 28px; }
+.pager button { cursor: pointer; border: 1px solid var(--line); background: #fff; border-radius: 6px; padding: 6px 11px; font-size: .85rem; }
+.pager button.active { background: var(--forest); color: #fff; border-color: var(--forest); }
+.pager button:disabled { opacity: .4; cursor: default; }
+.pager .info { font-size: .82rem; color: var(--muted); margin: 0 8px; }
+
+.empty { padding: 60px 20px; text-align: center; color: var(--muted); }
+footer { padding: 14px 20px 30px; text-align: center; color: var(--muted); font-size: .8rem; }

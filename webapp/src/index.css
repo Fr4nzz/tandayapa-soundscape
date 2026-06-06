@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+/* ---- bioacoustic-instrument theme tokens ---- */
+@theme {
+  --color-base: #0b110d;
+  --color-base-2: #0f1712;
+  --color-panel: #121c15;
+  --color-panel-2: #182419;
+  --color-line: #25342b;
+  --color-line-2: #324636;
+  --color-ink: #e9efe4;
+  --color-muted: #8aa18f;
+  --color-faint: #5e7565;
+  --color-moss: #9ccb5e;
+  --color-moss-bright: #c6f06a;
+  --color-gold: #e3ad4c;
+  --color-forest: #4f9a4d;
+  --color-pasture: #e0a64a;
+  --color-ember: #f06a4a;
+
+  --font-display: "Fraunces", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+}
+
+@layer base {
+  html { color-scheme: dark; }
+  body {
+    margin: 0;
+    background: var(--color-base);
+    color: var(--color-ink);
+    font-family: var(--font-mono);
+    -webkit-font-smoothing: antialiased;
+    /* layered atmosphere: two moss/gold glows + a faint grain */
+    background-image:
+      radial-gradient(60rem 40rem at 12% -8%, rgba(124, 173, 79, 0.10), transparent 60%),
+      radial-gradient(48rem 36rem at 100% 0%, rgba(227, 173, 76, 0.07), transparent 55%),
+      linear-gradient(180deg, var(--color-base-2), var(--color-base) 40%);
+    background-attachment: fixed;
+  }
+  /* faint film grain overlay */
+  body::before {
+    content: "";
+    position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  ::selection { background: rgba(198, 240, 106, 0.25); }
+}
+
+/* ---- scrollbars ---- */
+* { scrollbar-width: thin; scrollbar-color: var(--color-line-2) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb { background: var(--color-line-2); border-radius: 99px; border: 3px solid transparent; background-clip: content-box; }
+
+/* ---- range sliders (instrument-like) ---- */
+input[type="range"] {
+  -webkit-appearance: none; appearance: none; height: 4px; border-radius: 99px;
+  background: var(--color-line-2); outline: none; cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%;
+  background: var(--color-moss-bright); border: 2px solid var(--color-base);
+  box-shadow: 0 0 0 1px var(--color-line-2), 0 0 12px rgba(198, 240, 106, 0.5);
+}
+
+/* ---- staggered card reveal ---- */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.rise { animation: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(198, 240, 106, 0.35); }
+  100% { box-shadow: 0 0 0 8px rgba(198, 240, 106, 0); }
+}
+.recording { animation: pulse-ring 1.6s ease-out infinite; }

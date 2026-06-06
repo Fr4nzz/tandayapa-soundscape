@@ -1,0 +1,54 @@
+# =============================================================================
+# Tandayapa Soundscape — .gitignore
+# Keep CODE + DOCS in git. Exclude raw audio, trained models, derived outputs,
+# and build artifacts (all regenerable or too large / not redistributable).
+# =============================================================================
+
+# --- Raw AudioMoth recordings (device folders + any WAV) ----------------------
+/F[0-9]*_A[0-9]*/
+/P[0-9]*_A[0-9]*/
+*.WAV
+*.wav
+CONFIG.TXT
+
+# --- Trained models (BirdNET / frog classifier / Perch, etc.) -----------------
+/models/
+*.tflite
+*.pb
+*.h5
+*.onnx
+*.ckpt
+*.pt
+*.pth
+
+# --- Derived pipeline outputs (regenerate with the R scripts) -----------------
+# Keep ONLY the static-gallery template (source); ignore everything else.
+/outputs/*
+!/outputs/gallery_site_template/
+
+# --- Web app build + deps (run `npm install` / `npm run build`) ---------------
+/webapp/node_modules/
+/webapp/dist/
+
+# --- Rendered reports + Rmd render assets (knit from the .Rmd) ----------------
+/*.html
+*_files/
+
+# --- Course material / large binaries -----------------------------------------
+*.pptx
+
+# --- Scratch / tooling --------------------------------------------------------
+/work/
+.playwright-mcp/
+*.tmp
+
+# --- R / RStudio --------------------------------------------------------------
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# --- OS / editor --------------------------------------------------------------
+.DS_Store
+Thumbs.db
+.vscode/

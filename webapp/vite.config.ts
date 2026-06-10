@@ -2,17 +2,10 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-// Built app is served by the LAN Python server at /webapp/dist/ (so its own
-// assets load relatively), while data + audio come from the server root.
-// In `npm run dev`, proxy those root paths to the running Python server :8000.
+// Public build for GitHub Pages at https://fr4nzz.github.io/tandayapa-soundscape/app/.
+// Detection JSON is bundled (public/data); audio streams from Cloudflare R2.
 export default defineConfig({
-  base: './',
+  base: '/tandayapa-soundscape/app/',
   plugins: [react(), tailwindcss()],
-  server: {
-    host: true,
-    proxy: {
-      '/outputs': { target: 'http://localhost:8000', changeOrigin: true },
-      '^/[FP][0-9].*\\.WAV$': { target: 'http://localhost:8000', changeOrigin: true },
-    },
-  },
+  server: { host: true },
 })

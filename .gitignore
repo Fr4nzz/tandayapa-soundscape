@@ -75,3 +75,6 @@ __pycache__/
 # Opus web-audio (large; host on R2/Internet Archive, not git)
 /data/web_audio/
 *.opus
+
+# generated webapp data (rebuild with analysis/build_webapp_data.py)
+/webapp/public/data/

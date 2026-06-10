@@ -4,7 +4,7 @@ import { Filters, DEFAULT_FILTERS, type FilterState } from './components/Filters
 import { DetectionCard } from './components/DetectionCard'
 import { SpeciesRow, type SpeciesGroup } from './components/SpeciesRow'
 
-const DATA = '/outputs/web'
+const DATA = `${import.meta.env.BASE_URL}data`   // detection JSON bundled with the app; audio streams from Cloudflare R2
 const PAGE = 24        // detection cards per page (grid view)
 
 export default function App() {

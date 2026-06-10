@@ -110,15 +110,18 @@ realised inter-recorder distances are 15, 30, 60, and 120 m. We **analyse pairs 
 **exclude the single 120 m pair**: it can only come from the 60 m spacing comparing points 1↔3, and
 because the forest 60 m deployments lost their point-1 recorder, a 120 m pair exists **only in pasture,
 on one line, with no replicate**. Dropping it keeps the forest–pasture comparison on the **same
-15–60 m range** and prevents one high-leverage point from driving the result.
+15–60 m range** and prevents one unusual, isolated point from driving the result.
 
 ```{r design-table}
 det %>% distinct(deploy, date, habitat, spacing_m, point_num) %>%
   count(date, spacing_m, habitat, name = "recorders") %>%
   pivot_wider(names_from = habitat, values_from = recorders, values_fill = 0) %>%
   arrange(date) %>%
-  kable(caption = "Deployments: each date sampled one spacing in both habitats (recorders per habitat).")
+  kable(caption = "Table 1. Deployments: each date sampled one spacing in both habitats (number of working recorders per habitat).")
 ```
+
+**Table 1** lists the deployments: each day used one spacing (15, 30, or 60 m) in both habitats, and
+each spacing was repeated on two days.
 
 # Data collection
 
@@ -135,19 +138,52 @@ this report is fully reproducible from this document without the raw audio.
 
 # Data analysis
 
-All effect sizes come from **linear mixed models** (`lme4`/`lmerTest`) that carry the replication: the
-**deployment day is a random intercept**, so each replicate block has its own baseline and the
-distance effect is estimated *within* the replication structure rather than from pseudo-replicated
-pairs. Following the course emphasis on **effect sizes over p-values**, every distance effect is
-reported as its **slope (change per +10 m) with a 95% confidence interval** (plus a marginal R²); a CI
-that excludes zero indicates an effect. The habitat comparison is the **forest − pasture slope
-difference** with its 95% CI. Figures show the **mixed-model fixed-effect fit with 95% bands**; points
-are adjusted for the deploy random intercept (so day-to-day baselines are removed) and the symbol marks
-the replicate day.
+## Key terms in plain words
+
+We use a few technical words; here is what each means, simply:
+
+- **Dissimilarity** — a number from 0 to 1 that says how *different* two recorders' communities are.
+  0 = identical, 1 = nothing in common. We measure it two ways:
+  - **Jaccard dissimilarity** — based only on *which species* are present (presence/absence). It asks:
+    do the two recorders hear the **same list of species**? It treats a species heard once the same as
+    one heard 500 times, so it is sensitive to rare species and false positives.
+  - **Bray–Curtis dissimilarity** — based on *how much* each species is heard (here, the number of
+    detections = **vocal activity**). It asks: do the two recorders hear the same species **in similar
+    amounts**? It gives less weight to rare species, so it is steadier against noise.
+  - We report **both** because if they agree, the result is more trustworthy (it is not an artefact of
+    one method's assumptions).
+- **Distance-decay** — the idea that two recorders record **more different** communities as the
+  distance between them grows.
+- **Effect size** — the *size* of a relationship (e.g. how much dissimilarity rises per +10 m), not
+  just whether it is "significant". We report it as a **slope**.
+- **95% confidence interval (CI)** — the range of plausible values for that slope. If the CI **does not
+  include zero**, the effect is statistically clear; if it **includes zero**, we cannot rule out "no
+  effect".
+- **R²** — the fraction of the variation the relationship explains (0 = none, 1 = all).
+- **Mixed model / random effect** — a model that accounts for our sampling design: because each
+  deployment **day** has its own baseline (and the three recorders of a day share points), we let each
+  day have its own intercept (a "random effect") so the distance effect is estimated *fairly*, not from
+  pseudo-replicated pairs.
+- **ACI, BI, ADI** — three "acoustic indices" that summarise a whole recording with one number each
+  (complexity, energy in the 2–8 kHz biological band, and how evenly energy is spread across
+  frequencies) **without identifying species**.
+
+## How the analysis works
+
+All **effect sizes** come from **linear mixed models** (`lme4`/`lmerTest`) with the **deployment day as
+a random effect**. Following the course emphasis on **effect sizes over p-values**, every distance
+effect is reported as its **slope (change per +10 m) with a 95% CI** (plus an R²); a CI that excludes
+zero indicates an effect. The habitat comparison is the **forest − pasture slope difference** with its
+95% CI. Figures show the model's fitted line with a 95% band; the points are adjusted for the day
+random effect (so day-to-day baseline differences are removed and the points sit close to the line),
+and the symbol marks whether the point is from the **first or second** day that spacing was used.
 
 **Cleaning (tidyverse).** From the BirdNET detections we drop three frog taxa that expert review judged
 to be noise misclassified as frogs — listed explicitly here, not hidden in a file — and keep detections
-at confidence ≥ 0.5 (with 0.25 / 0.7 as a sensitivity check). Insects were reviewed and kept.
+at confidence ≥ 0.5 (with 0.25 / 0.7 as a check). Insects were reviewed and kept. A note on
+"abundance": our counts are **vocal activity** (how often a species was detected), **not true
+abundance** — one individual singing a lot in the forest looks like "more" than a quiet individual in
+the pasture, so Bray–Curtis here is *activity-weighted*, not a real population count.
 
 ```{r clean}
 excluded_frogs <- c("Pipa pipa", "Sachatamia orejuela", "Teratohyla pulveratum")
@@ -228,26 +264,46 @@ mm_decay_plot <- function(d, resp, ylab){
 
 # Results
 
-## Detected richness
+## Detected richness and vocal activity
 
 ```{r richness}
 dets %>% group_by(habitat, group) %>% summarise(n = n_distinct(species), .groups="drop") %>%
   pivot_wider(names_from = group, values_from = n, values_fill = 0) %>%
   left_join(dets %>% group_by(habitat) %>% summarise(TOTAL = n_distinct(species)), by="habitat") %>%
-  kable(caption = "Detected species richness by habitat and group (confidence ≥ 0.5).")
+  kable(caption = "Table 2. Number of species detected by habitat and group (confidence ≥ 0.5).")
 ```
 
-Detected richness is **nearly identical** between habitats, so the contrast is about *spatial
-structure*, not species count.
+**Table 2** shows how many species we detected. Detected richness is **nearly identical** between
+forest and pasture, so the spacing contrast is about *spatial structure*, not species count.
+
+**Figure 1** puts richness (how *many* species) next to vocal activity (how *often* they were
+detected). The two habitats hold a similar number of species, but they differ in how much each group
+calls. Remember (see Data analysis) that vocal activity is **not true abundance**: the same individual
+may simply sing more in one habitat than the other, so we read the right-hand panel as "how much sound
+each group produced", not "how many animals there were".
+
+```{r richness-activity-fig, fig.width=9, fig.height=3.8, fig.cap="Figure 1. (A) Number of species and (B) vocal activity (number of detections) by habitat and group (confidence ≥ 0.5). Richness is similar between habitats; vocal activity is not true abundance (one individual may sing more in one habitat)."}
+rich <- dets %>% group_by(habitat, group) %>% summarise(value = n_distinct(species), .groups="drop") %>% mutate(panel = "A. Species richness")
+act  <- dets %>% count(habitat, group, name = "value") %>% mutate(panel = "B. Vocal activity (detections)")
+bind_rows(rich, act) %>%
+  ggplot(aes(group, value, fill = habitat)) +
+  geom_col(position = position_dodge(width = .8), width = .7) +
+  scale_fill_manual(values = cols) + facet_wrap(~panel, scales = "free_y") +
+  labs(x = NULL, y = NULL) + theme_minimal()
+```
 
 ## Species community: distance-decay (P1, P2)
 
-```{r community}
+In **Figures 2 and 3**, an upward line means the two recorders record **more different** communities as
+they get farther apart (distance-decay). The gold line is pasture, the green line is forest; the shaded
+band is the 95% CI, and the circle/triangle symbols mark the first/second replicate day.
+
+```{r community, fig.cap="Figure 2. Community difference (Bray–Curtis, activity-weighted) vs distance between recorders (≤60 m), forest vs pasture. Line = mixed-model fit; band = 95% CI; points adjusted for the day random effect; symbol = replicate day."}
 pw <- build_comm_pw(CONF_MIN)
 mm_decay_plot(pw, "bray", "Bray–Curtis dissimilarity (day-adjusted)")
 ```
 
-```{r community2, fig.cap="Species turnover (Jaccard) with distance (≤60 m). Mixed-model fit + 95% band; points day-adjusted, shape = replicate day."}
+```{r community2, fig.cap="Figure 3. Species turnover (Jaccard, presence/absence) vs distance (≤60 m). Same model and symbols as Figure 2."}
 mm_decay_plot(pw, "jacc", "Jaccard dissimilarity (day-adjusted)")
 ```
 
@@ -255,38 +311,44 @@ mm_decay_plot(pw, "jacc", "Jaccard dissimilarity (day-adjusted)")
 slope_tab <- bind_rows(
   mm_hab(pw, "bray") %>% mutate(metric = "Bray-Curtis", .before = 1),
   mm_hab(pw, "jacc") %>% mutate(metric = "Jaccard", .before = 1))
-kable(slope_tab, caption = "Per-habitat distance EFFECT SIZE (mixed model, ≤60 m): slope per +10 m, 95% CI, marginal R², n.")
+kable(slope_tab, caption = "Table 3. Distance effect on community difference, by habitat (mixed model, ≤60 m). 'Δ/+10m' = how much dissimilarity changes per extra 10 m; 'CI low/high' = the 95% range; 'CI excl 0' = yes means the effect is statistically clear; n = number of recorder pairs.")
 ```
 
-Over the balanced 15–60 m range, community dissimilarity **increases with distance in pasture** for
-both metrics, and the effect is **statistically resolved**: Bray–Curtis +0.099 per +10 m
-[95% CI +0.028, +0.169] and Jaccard +0.056 [+0.004, +0.108] — **both CIs exclude zero** (P1 supported
-in pasture). **Forest** shows a weak, positive-leaning trend whose CI **includes zero**. So the
-distance-decay is **clear in open pasture and unresolved in forest** — the *opposite* of the
-sound-attenuation prediction (P2 not supported, see below).
+**How to read Table 3:** the column **Δ/+10m** is the effect size — how much more different two
+recorders become for every extra 10 m apart (a positive number = distance-decay). The **CI low / CI
+high** columns give the plausible range; when the column **CI excl 0** says **yes**, the effect is
+statistically clear (the range does not include zero).
+
+The result: over 15–60 m, community difference **increases with distance in the pasture** for both
+measures, and the effect is **clear** — Bray–Curtis +0.099 per +10 m (CI +0.028 to +0.169) and Jaccard
++0.056 (CI +0.004 to +0.108), both with "CI excl 0 = yes" (Figures 2–3, Table 3). In the **forest** the
+trend is weak and its CI includes zero. So the distance-decay is **clear in the open pasture and
+unresolved in forest** — the *opposite* of our sound-attenuation prediction (P2; see below).
 
 ### Robustness to the confidence threshold
 
 ```{r sensitivity}
 map_dfr(c(0.25, 0.5, 0.7), function(cm)
   mm_hab(build_comm_pw(cm), "jacc") %>% mutate(conf = cm, .before = 1) %>% select(-`R2(dist)`)) %>%
-  kable(caption = "Jaccard distance slope by confidence threshold (≤60 m). The PASTURE effect excludes zero at every threshold.")
+  kable(caption = "Table 4. Does the pasture result depend on the confidence cut-off? Jaccard distance slope at three BirdNET confidence thresholds (≤60 m).")
 ```
 
-The **pasture** distance-decay is **robust to the threshold** (CI excludes zero at 0.25, 0.5 and 0.7).
-The **forest** effect is weak and resolved only at the permissive 0.25 cutoff (which admits the most
-false-positive singletons), so it is not robust.
+**Table 4** checks whether the result depends on how strict we are with BirdNET's confidence. The
+**pasture** distance-decay holds at **every** threshold (0.25, 0.5, 0.7 — "CI excl 0 = yes" each time),
+so it is robust. The **forest** effect appears only at the loosest cut-off (0.25, which lets in the most
+false positives), so it is not reliable.
 
 ### Does habitat change the decay rate? (P2)
 
 ```{r interaction}
 bind_rows(mm_h2(pw, "bray"), mm_h2(pw, "jacc")) %>%
-  kable(caption = "Habitat contrast: forest − pasture difference in distance slope (per +10 m), 95% CI. Positive = forest steeper (P2).")
+  kable(caption = "Table 5. Does habitat change the decay rate? Forest − pasture difference in the distance slope (per +10 m) with 95% CI. A positive number would mean forest decays faster (our prediction P2).")
 ```
 
-The forest − pasture difference is **negative** (pasture steeper), the *opposite* of P2; the CI still
-includes zero, so the difference is not formally resolved, but every line of evidence points to the
-spatial structure being in the **open pasture**, not forest. **P2 is not supported.**
+**Table 5** directly tests P2 (is forest steeper than pasture?). The forest − pasture difference is
+**negative** — meaning **pasture** is the steeper habitat, the *opposite* of what we predicted. The CI
+still includes zero (so it is not formally proven), but together with Table 3 everything points to the
+spatial signal being in the **open pasture**, not the forest. **P2 is not supported.**
 
 ## Acoustic indices: distance-decay (P4)
 
@@ -304,10 +366,17 @@ for (g in split(idx, list(idx$deploy, idx$habitat), drop = TRUE)) {
 }
 ipw <- bind_rows(ip) %>% filter(distance_m <= MAXDIST)
 map_dfr(c("dACI","dBI","dADI"), function(r) mm_hab(ipw, r) %>% mutate(index = r, .before = 1)) %>%
-  kable(caption = "Acoustic-index distance EFFECT SIZE (mixed model, ≤60 m): slope of |index difference| per +10 m, 95% CI.")
+  kable(caption = "Table 6. Do the acoustic indices change with distance? For each index, how much the difference between two recorders changes per +10 m, with 95% CI (mixed model, ≤60 m). 'dACI/dBI/dADI' = the difference in ACI/BI/ADI between the two recorders.")
 ```
 
-```{r index-fig, fig.width=9, fig.height=3.8, fig.cap="Per-index distance-decay (≤60 m). Mixed-model fit + 95% band; points day-adjusted, shape = replicate. All three indices are flat — no CI excludes zero."}
+**How to read Table 6:** for each index (ACI, BI, ADI) we measured how *different* two recorders' index
+values are, and tested whether that difference grows with distance — exactly the same question as for
+the species community, but using the cheap indices instead of species. If an index captured the spatial
+pattern, its "CI excl 0" would say **yes**. Here **every row says no** (all CIs include zero): the
+indices do **not** change with distance. In short, the indices are **flat** (Figure 4) — they miss the
+spatial signal that the species community shows.
+
+```{r index-fig, fig.width=9, fig.height=3.8, fig.cap="Figure 4. Difference in each acoustic index (ACI, BI, ADI) between two recorders vs distance (≤60 m). All three lines are flat — no index changes with distance (none has a CI that excludes zero)."}
 relab <- c(dACI = "ACI", dBI = "BI", dADI = "ADI")
 pts_all <- list(); ln_all <- list()
 for (r in c("dACI","dBI","dADI")) for (h in c("forest","pasture")){
@@ -337,29 +406,17 @@ ggplot() +
 Over 15–60 m **none of the acoustic indices shows a distance-decay** — ACI, BI and ADI all have CIs
 that include zero in both habitats. The cheap indices do **not** capture the spatial turnover that the
 species community resolves in pasture (P4 not supported). (In an earlier version that kept the lone
-120 m pasture pair, ADI appeared significant; that signal came entirely from that single high-leverage
+120 m pasture pair, ADI appeared significant; that signal came entirely from that single unusual
 point and vanished once it was removed — a reminder to distrust an effect that hinges on one
 observation.)
 
 ## Diel variation of the indices (P3)
 
-```{r diel}
-idxd$diel <- factor(idxd$diel, levels = c("night","dawn","day","dusk"))
-map_dfr(c("ACI","BI","ADI"), function(v){
-  m <- suppressWarnings(lmer(reformulate("diel*habitat + (1|device)", v), data = idxd, REML = TRUE))
-  b <- fixef(m); V <- as.matrix(vcov(m))
-  map_dfr(c("forest","pasture"), function(h)
-    map_dfr(c("dawn","day","dusk"), function(p){
-      terms <- if (h=="forest") paste0("diel",p) else c(paste0("diel",p), paste0("diel",p,":habitatpasture"))
-      est <- sum(b[terms]); se <- sqrt(sum(V[terms,terms]))
-      tibble(index=v, habitat=h, period=p, `vs night`=round(est,3),
-             `CI low`=round(est-1.96*se,3), `CI high`=round(est+1.96*se,3),
-             `CI excl 0`=ifelse((est-1.96*se)>0|(est+1.96*se)<0,"yes","no"))
-    }))
-}) %>% kable(caption = "Diel EFFECT SIZE: each period vs night (mixed model, recorder random intercept), 95% CI.")
-```
+Here we keep it simple and show the pattern in one figure (the diel effect is large and obvious, so we
+do not need a separate effect-size table as for the main distance question).
 
-```{r diel-fig, fig.width=9, fig.height=3.4, fig.cap="Diel variation of ACI, BI and ADI by habitat (mean ± 95% CI). BI peaks at dawn/day (the chorus); ADI dips at midday; pasture reads louder than forest."}
+```{r diel-fig, fig.width=9, fig.height=3.4, fig.cap="Figure 5. How the three acoustic indices change through the day (mean ± 95% CI), forest vs pasture. BI peaks at dawn/day (the chorus); ADI dips at midday; pasture reads louder than forest."}
+idxd$diel <- factor(idxd$diel, levels = c("night","dawn","day","dusk"))
 idxd %>% pivot_longer(c(ACI,BI,ADI), names_to="index", values_to="value") %>%
   mutate(index = factor(index, c("ACI","BI","ADI"))) %>%
   group_by(index, habitat, diel) %>%
@@ -371,15 +428,16 @@ idxd %>% pivot_longer(c(ACI,BI,ADI), names_to="index", values_to="value") %>%
   labs(x="Time of day", y="Index value (mean ± 95% CI)") + theme_minimal()
 ```
 
-The indices clearly track **time of day**: **BI** (2–8 kHz biological band) rises at **dawn and day**
-(the chorus; forest dawn +2.5, day +2.7, pasture dawn +2.0, CIs exclude zero), **ADI dips at midday**
-(daytime energy concentrates into dominant frequency bands, lowering evenness), and **pasture reads
-louder than forest** across the day. So the same indices that miss the subtle spatial signal capture
-the strong temporal one well (P3 supported) — time of day must be balanced when comparing recorders.
+The indices clearly track **time of day** (Figure 5): **BI** (the biological 2–8 kHz band) rises at
+**dawn and day** — the dawn chorus — and falls at night; **ADI dips at midday** (by day the sound
+concentrates into a few dominant frequencies, so it is less "even"); and **pasture sounds louder than
+forest** through the day. So the same indices that miss the subtle *spatial* signal capture the strong
+*time-of-day* signal well (P3 supported) — which is why time of day must be balanced when comparing
+recorders.
 
 ## Microclimate: forest vs pasture
 
-```{r microclimate, fig.width=9, fig.height=3.6, fig.cap="Mean temperature and relative humidity by hour (Kestrel DROP 2, June 3–7). Forest buffers both: pasture spikes hotter and drier at midday."}
+```{r microclimate, fig.width=9, fig.height=3.6, fig.cap="Figure 6. Average temperature and relative humidity by hour of day (loggers, June 3–7). The forest stays cooler and more humid; the pasture heats up and dries out at midday."}
 clim %>% pivot_longer(c(temp_c, rh_pct), names_to="var", values_to="value") %>%
   mutate(var = recode(var, temp_c="Temperature (°C)", rh_pct="Relative humidity (%)")) %>%
   group_by(var, habitat, hour) %>% summarise(mean = mean(value), .groups="drop") %>%
@@ -393,14 +451,14 @@ clim %>% group_by(habitat) %>%
   summarise(`mean T (°C)` = round(mean(temp_c),1), `max T` = round(max(temp_c),1),
             `mean RH (%)` = round(mean(rh_pct),1),
             `% time RH ≥ 99` = round(100*mean(rh_pct >= 99)), .groups="drop") %>%
-  kable(caption = "Microclimate summary (study window). Forest is cooler and far more often saturated.")
+  kable(caption = "Table 7. Microclimate summary for the study window. Forest is cooler and far more often near 100% humidity than pasture.")
 ```
 
-The **forest buffers the microclimate**: at midday the pasture warms to ~22 °C and its humidity falls
-to ~81%, while the forest stays ~19.6 °C and ~97% RH; the forest is near-saturation **84%** of the time
-versus **52%** in pasture. This is consistent with the habitat-structure mechanism (closed forest
-canopy moderating temperature and moisture extremes) and with the diel result that the open pasture
-"sounds" busier by day.
+The **forest buffers the microclimate** (Figure 6, Table 7): at midday the pasture warms to ~22 °C and
+its humidity falls to ~81%, while the forest stays ~19.6 °C and ~97% humidity; the forest is near
+100% humidity **84%** of the time versus **52%** in the pasture. This fits the idea that the closed
+forest canopy softens temperature and moisture extremes, and it matches the diel result that the open
+pasture "sounds" busier by day.
 
 # Discussion
 

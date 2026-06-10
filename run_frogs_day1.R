@@ -8,7 +8,7 @@ options(timeout = 1800)
 source(file.path("d:/Audiomoths", "tandayapa_common.R"))
 suppressMessages({ library(birdnetR); library(readr) })
 
-DAY       <- "day1"            # <-- deployment day
+DAY       <- Sys.getenv("TANDAYAPA_DAY", "day1")   # override: set TANDAYAPA_DAY
 MIN_CONF  <- 0.25
 FROG_DIR  <- "d:/Audiomoths/models/frog_classifier_ec"
 OUT       <- day_dir(DAY)

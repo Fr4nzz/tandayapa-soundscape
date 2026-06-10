@@ -1,0 +1,14 @@
+image_ref,raw_label,corrected_label,habitat,nominal_position_m,lat_dd,lon_dd,elev_m_gps,canonical_point,notes
+13,P15-01-A4,P15-01,pasture,0,0.015750,-78.672733,,P-000,lowest point / start of transect; elevation not shown on screen
+12,P15-02-A01,P15-02,pasture,15,0.018867,-78.674367,1646,P-015,
+11,P15-03-A1,P15-03,pasture,30,0.018967,-78.674267,1648,P-030,same point as P30-02 (img 5); two GPS reads ~26 m apart
+5,P30-02-A03,P30-02,pasture,30,0.019050,-78.674050,1669,P-030,duplicate of P15-03 (img 11)
+1,P6002,P60-02,pasture,60,0.018767,-78.674483,1645,P-060,
+2,P3 60M,,pasture,120,0.018867,-78.674350,1638,P-120,RULE says 120 m (point3 x spacing60) but GPS is only ~18 m from P-060 - confirm whether placed at 120 m or 60 m
+10,F15-01-05,F15-01,forest,0,0.019083,-78.674500,1646,F-000,
+6,F1502,F15-02,forest,15,0.019333,-78.674300,1659,F-015,
+3,F15-03-A08,F15-03,forest,30,0.019333,-78.674217,1659,F-030,
+9,F02-02-A06,,forest,,0.019350,-78.674283,1656,?,label does not fit spacing/point scheme; GPS sits in the F-015/F-030 cluster - confirm
+8,P6002,F6002,forest,60,0.019467,-78.673950,1680,F-060,CORRECTED from P6002; = F2 60M = F3 30M = the 60 m forest point
+7,F3 60M,,forest,120,0.019150,-78.673550,1697,F-120,point3 x spacing60 = 120 m (your example)
+4,F6003,F60-03,forest,120,0.019533,-78.673567,1707,F-120,duplicate of F3 60M (img 7); two GPS reads ~43 m apart

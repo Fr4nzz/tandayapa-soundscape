@@ -34,20 +34,52 @@ DEVICES <- tribble(
   "day2",  "F3002_A05", "forest",   2L,    "A05",     0,
   "day2",  "F3003_A07", "forest",   3L,    "A07",    -5,
   "day2",  "P3001_A06", "pasture",  1L,    "A06",     0,
-  "day2",  "P3002_A04", "pasture",  2L,    "A04",     0
+  "day2",  "P3002_A04", "pasture",  2L,    "A04",     0,
+  # ---- day3: 60 m spacing (2026-06-04). forest p1 (F6001) missing;
+  #            pasture p1 (P6001) & p3 (P6003) SD cards failed -> pasture p2 only ----
+  "day3",  "F6002_A03", "forest",   2L,    "A03",     0,
+  "day3",  "F6003_A05", "forest",   3L,    "A05",     0,
+  "day3",  "P6002_A02", "pasture",  2L,    "A02",     0,
+  # ---- day4: 15 m spacing (2026-06-05). forest p3 (F1503_A06) failed (USB mode).
+  #            forest p2 had TWO co-located recorders (A01 + A04) as backup; we use
+  #            A01 as p2 (A04 left out = a 0 m same-spot agreement control). ----
+  "day4",  "F1501_A07", "forest",   1L,    "A07",     0,
+  "day4",  "F1502_A01", "forest",   2L,    "A01",     0,
+  "day4",  "P1501_A02", "pasture",  1L,    "A02",     0,
+  "day4",  "P1502_A05", "pasture",  2L,    "A05",     0,
+  "day4",  "P1503_A03", "pasture",  3L,    "A03",     0,
+  # ---- day5: 30 m spacing (2026-06-06). full 3+3 (cleanest new round).
+  #            (P6003_A07_7Jun is a 60 m pasture-p3 recovery run, NOT day5 -> excluded) ----
+  "day5",  "F3001_A02", "forest",   1L,    "A02",     0,
+  "day5",  "F3002_A03", "forest",   2L,    "A03",     0,
+  "day5",  "F3003_A01", "forest",   3L,    "A01",     0,
+  "day5",  "P3001_A05", "pasture",  1L,    "A05",     0,
+  "day5",  "P3002_A04_6julio", "pasture", 2L, "A04",  0,
+  "day5",  "P3003_A06", "pasture",  3L,    "A06",     0,
+  # ---- day6: 60 m spacing (2026-06-07, last day). 2 dead SD cards:
+  #            forest p1 (F6001) & pasture p2 (P6002) -> forest p2-p3, pasture p1-p3 ----
+  "day6",  "F6002_A05", "forest",   2L,    "A05",     0,
+  "day6",  "F6003_A06", "forest",   3L,    "A06",     0,
+  "day6",  "P6001_A02", "pasture",  1L,    "A02",     0,
+  "day6",  "P6003_A01", "pasture",  3L,    "A01",     0
 )
 
 ## Per-day analysis window (LOCAL time, after clock correction).
+## Standard window for new rounds is 11:00:00 -> 09:42:00 (09:42-11:00 = repositioning).
 DAY_WINDOWS <- list(
   day1 = c("2026-06-02 10:40:00", "2026-06-03 09:40:00"),
-  day2 = c("2026-06-03 11:40:00", "2026-06-04 09:40:00")
+  day2 = c("2026-06-03 11:40:00", "2026-06-04 09:40:00"),
+  day3 = c("2026-06-04 11:00:00", "2026-06-05 09:42:00"),
+  day4 = c("2026-06-05 11:00:00", "2026-06-06 09:42:00"),
+  day5 = c("2026-06-06 11:00:00", "2026-06-07 09:42:00"),
+  day6 = c("2026-06-07 11:00:00", "2026-06-08 09:42:00")
 )
 
 ## Recorder spacing (m) per day -> distance between points i,j on the line.
-DAY_SPACING <- list(day1 = 15, day2 = 30)
+DAY_SPACING <- list(day1 = 15, day2 = 30, day3 = 60, day4 = 15, day5 = 30, day6 = 60)
 
 ## BirdNET range-filter week per day (1-48, ~4 per month). Early June ~ 21.
-DAY_WEEK <- list(day1 = 21, day2 = 21)
+DAY_WEEK <- list(day1 = 21, day2 = 21, day3 = 21, day4 = 21, day5 = 21, day6 = 21)
 
 ## Distance (m) between two points given the day's spacing (equal-spaced line).
 point_distance_m <- function(day, i, j) DAY_SPACING[[day]] * abs(i - j)

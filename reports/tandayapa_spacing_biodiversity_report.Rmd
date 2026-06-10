@@ -12,16 +12,41 @@ output:
     df_print: kable
     fig_width: 6.6
     fig_height: 4.4
+  word_document:
+    reference_docx: reference.docx
+    fig_width: 6.2
+    fig_height: 3.9
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.align = "center")
+# Show the code in the HTML (reproducible report); hide it in the Word version (clean read).
+knitr::opts_chunk$set(echo = knitr::is_html_output(), message = FALSE, warning = FALSE)
 suppressMessages({
   library(tidyverse)   # dplyr, tidyr, readr, purrr, stringr, ggplot2 — cleaning + plots
   library(vegan)       # community dissimilarities (Bray–Curtis, Jaccard)
   library(lme4); library(lmerTest)   # linear mixed models (deploy as random effect)
   library(knitr)
 })
+
+# Publication-style tables: plain kable in HTML, flextable (journal look) in Word.
+pub_tab <- function(df, cap){
+  if (knitr::is_html_output()) return(knitr::kable(df, caption = cap))
+  nc <- ncol(df)
+  flextable::flextable(df) |>
+    flextable::set_caption(cap) |>
+    flextable::border_remove() |>
+    flextable::hline_top(border = officer::fp_border(color = "black", width = 2), part = "header") |>
+    flextable::hline_bottom(border = officer::fp_border(color = "black", width = 1), part = "header") |>
+    flextable::hline_bottom(border = officer::fp_border(color = "black", width = 2), part = "body") |>
+    flextable::bold(part = "header") |>
+    flextable::font(fontname = "Arial", part = "all") |>
+    flextable::fontsize(size = 9, part = "all") |>
+    flextable::align(j = 2:nc, align = "center", part = "all") |>
+    flextable::align(j = 1, align = "left", part = "all") |>
+    flextable::valign(valign = "center", part = "all") |>
+    flextable::padding(padding = 4, part = "all") |>
+    flextable::set_table_properties(layout = "autofit", width = 1)
+}
 CONF_MIN <- 0.5            # primary BirdNET confidence threshold (sensitivity to 0.25 / 0.7 below)
 MAXDIST  <- 60            # analyse pairs up to 60 m (drop the lone, unreplicated 120 m pair)
 cols <- c(forest = "#2C5F2D", pasture = "#D9A441")
@@ -99,7 +124,7 @@ a.s.l.). Two adjacent habitats were sampled:
 # Experimental design
 
 We deployed AudioMoth recorders on short linear transects **20 m inside the edge** of each habitat, at
-**1.5 m height**, facing downslope (the site is on a slope), with the same protocol in both habitats and
+**1.5 m height**, facing downslope, with the same protocol in both habitats and
 each point marked with flagging tape. Each transect held **three recorders** at points 1–2–3. The
 **spacing was changed between deployment days**, sampling three spacings — **15, 30, and 60 m** — and
 each spacing was deployed on **two separate days** (replicate blocks). Recorders were **swapped between
@@ -117,7 +142,7 @@ det %>% distinct(deploy, date, habitat, spacing_m, point_num) %>%
   count(date, spacing_m, habitat, name = "recorders") %>%
   pivot_wider(names_from = habitat, values_from = recorders, values_fill = 0) %>%
   arrange(date) %>%
-  kable(caption = "Table 1. Deployments: each date sampled one spacing in both habitats (number of working recorders per habitat).")
+  pub_tab("Table 1. Deployments: each date sampled one spacing in both habitats (number of working recorders per habitat).")
 ```
 
 **Table 1** lists the deployments: each day used one spacing (15, 30, or 60 m) in both habitats, and
@@ -273,7 +298,7 @@ mm_decay_plot <- function(d, resp, ylab){
 dets %>% group_by(habitat, group) %>% summarise(n = n_distinct(species), .groups="drop") %>%
   pivot_wider(names_from = group, values_from = n, values_fill = 0) %>%
   left_join(dets %>% group_by(habitat) %>% summarise(TOTAL = n_distinct(species)), by="habitat") %>%
-  kable(caption = "Table 2. Number of species detected by habitat and group (confidence ≥ 0.5).")
+  pub_tab("Table 2. Number of species detected by habitat and group (confidence ≥ 0.5).")
 ```
 
 **Table 2** shows how many species we detected. Detected richness is **nearly identical** between
@@ -314,7 +339,7 @@ mm_decay_plot(pw, "jacc", "Jaccard dissimilarity (day-adjusted)")
 slope_tab <- bind_rows(
   mm_hab(pw, "bray") %>% mutate(metric = "Bray-Curtis", .before = 1),
   mm_hab(pw, "jacc") %>% mutate(metric = "Jaccard", .before = 1))
-kable(slope_tab, caption = "Table 3. Distance effect on community difference, by habitat (mixed model, ≤60 m). 'Δ/+10m' = how much dissimilarity changes per extra 10 m; 'CI low/high' = the 95% range; 'CI excl 0' = yes means the effect is statistically clear; n = number of recorder pairs.")
+pub_tab(slope_tab, "Table 3. Distance effect on community difference, by habitat (mixed model, ≤60 m). 'Δ/+10m' = how much dissimilarity changes per extra 10 m; 'CI low/high' = the 95% range; 'CI excl 0' = yes means the effect is statistically clear; n = number of recorder pairs.")
 ```
 
 **How to read Table 3:** the column **Δ/+10m** is the effect size — how much more different two
@@ -333,7 +358,7 @@ unresolved in forest** — the *opposite* of our sound-attenuation prediction (P
 ```{r sensitivity}
 map_dfr(c(0.25, 0.5, 0.7), function(cm)
   mm_hab(build_comm_pw(cm), "jacc") %>% mutate(conf = cm, .before = 1) %>% select(-`R2(dist)`)) %>%
-  kable(caption = "Table 4. Does the pasture result depend on the confidence cut-off? Jaccard distance slope at three BirdNET confidence thresholds (≤60 m).")
+  pub_tab("Table 4. Does the pasture result depend on the confidence cut-off? Jaccard distance slope at three BirdNET confidence thresholds (≤60 m).")
 ```
 
 **Table 4** checks whether the result depends on how strict we are with BirdNET's confidence. The
@@ -345,7 +370,7 @@ false positives), so it is not reliable.
 
 ```{r interaction}
 bind_rows(mm_h2(pw, "bray"), mm_h2(pw, "jacc")) %>%
-  kable(caption = "Table 5. Does habitat change the decay rate? Forest − pasture difference in the distance slope (per +10 m) with 95% CI. A positive number would mean forest decays faster (our prediction P2).")
+  pub_tab("Table 5. Does habitat change the decay rate? Forest − pasture difference in the distance slope (per +10 m) with 95% CI. A positive number would mean forest decays faster (our prediction P2).")
 ```
 
 **Table 5** directly tests P2 (is forest steeper than pasture?). The forest − pasture difference is
@@ -369,7 +394,7 @@ for (g in split(idx, list(idx$deploy, idx$habitat), drop = TRUE)) {
 }
 ipw <- bind_rows(ip) %>% filter(distance_m <= MAXDIST)
 map_dfr(c("dACI","dBI","dADI"), function(r) mm_hab(ipw, r) %>% mutate(index = r, .before = 1)) %>%
-  kable(caption = "Table 6. Do the acoustic indices change with distance? For each index, how much the difference between two recorders changes per +10 m, with 95% CI (mixed model, ≤60 m). 'dACI/dBI/dADI' = the difference in ACI/BI/ADI between the two recorders.")
+  pub_tab("Table 6. Do the acoustic indices change with distance? For each index, how much the difference between two recorders changes per +10 m, with 95% CI (mixed model, ≤60 m). 'dACI/dBI/dADI' = the difference in ACI/BI/ADI between the two recorders.")
 ```
 
 **How to read Table 6:** for each index (ACI, BI, ADI) we measured how *different* two recorders' index
@@ -454,7 +479,7 @@ clim %>% group_by(habitat) %>%
   summarise(`mean T (°C)` = round(mean(temp_c),1), `max T` = round(max(temp_c),1),
             `mean RH (%)` = round(mean(rh_pct),1),
             `% time RH ≥ 99` = round(100*mean(rh_pct >= 99)), .groups="drop") %>%
-  kable(caption = "Table 7. Microclimate summary for the study window. Forest is cooler and far more often near 100% humidity than pasture.")
+  pub_tab("Table 7. Microclimate summary for the study window. Forest is cooler and far more often near 100% humidity than pasture.")
 ```
 
 The **forest buffers the microclimate** (Figure 6, Table 7): at midday the pasture warms to ~22 °C and

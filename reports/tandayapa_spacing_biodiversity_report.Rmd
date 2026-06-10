@@ -102,8 +102,8 @@ structure should modulate this: forest vegetation absorbs and scatters sound, gi
 
 - **P1, Distance-decay.** Pairwise community dissimilarity (Bray–Curtis, Jaccard) increases with
   inter-recorder distance.
-- **P2, Habitat modulates the decay.** The increase is steeper in **forest** than pasture (forest
-  attenuates sound, creating more localised soundscapes).
+- **P2, Habitat modulates the decay.** Dissimilarity increases **faster with distance** in **forest**
+  than pasture (forest attenuates sound, creating more localised soundscapes).
 - **P3, Diel variation.** Acoustic activity varies through the day; the biological band (BI) peaks
   around dawn/day (the chorus).
 - **P4, Index concordance.** The acoustic indices reproduce the community's distance/habitat pattern.
@@ -150,9 +150,11 @@ each spacing was repeated on two days.
 
 # Data collection
 
-Each AudioMoth recorded from **10:40 a.m. to 9:40 a.m. the next day**, taking **three 2-minute
+For analysis we used the window from **11:00 a.m. to 9:40 a.m. the next day**, discarding the
+surrounding period when recorders were being placed, collected, and swapped between positions, so that
+handling and movement were not counted as data. Within this window each recorder took **three 2-minute
 recordings per hour** (2 min on / 18 min off, e.g. :00, :20, :40), six minutes of audio per hour,
-spanning the full day–night cycle (Ross et al., 2023). Data were downloaded in the field after each
+covering the full day–night cycle (Ross et al., 2023). Data were downloaded in the field after each
 session. We complemented the audio with **two Kestrel DROP 2 dataloggers** (one per habitat) logging
 temperature and relative humidity every 10 minutes.
 
@@ -196,27 +198,27 @@ this report is fully reproducible from this document without the raw audio.
 
 ## Statistical analysis
 
-All **effect sizes** come from **linear mixed models** (`lme4`/`lmerTest`) with the **deployment day as
-a random effect**. For a pair of recorders $i,j$ in habitat $h$ and deployment day $d$, the
-dissimilarity is modelled as a function of the inter-recorder distance:
+All **effect sizes** come from **linear mixed models** (`lme4`/`lmerTest`). For each response we fit the
+same form of model, letting the effect of distance differ between habitats and giving each
+**deployment day** its own baseline through a random effect:
 
-$$y_{ijd} = \beta_0 + \beta_1\,\text{distance}_{ij} + u_d + \varepsilon_{ijd}, \qquad u_d \sim N(0,\sigma_u^2)$$
+$$\text{Response} \sim \text{Distance} \times \text{Habitat} + (1 \mid \text{day})$$
 
-where $\beta_1$ is the **effect size** (change in dissimilarity per metre, reported per +10 m), $u_d$ is
-the random intercept for each deployment day, and the habitat comparison is the difference in $\beta_1$
-between forest and pasture. The two community dissimilarities are
+The response is the community dissimilarity (**Bray–Curtis**, activity-weighted, or **Jaccard**,
+presence/absence) or, for the index analysis, the absolute index difference between the two recorders
+($\Delta\text{ACI}$, $\Delta\text{BI}$, $\Delta\text{ADI}$). The $\text{Distance}\times\text{Habitat}$
+term gives a separate distance slope for forest and pasture, and the difference between those slopes is
+the habitat effect; $(1 \mid \text{day})$ accounts for the deployment day. Variation through the day is
+examined with a separate model of index level:
 
-$$\text{Bray–Curtis}_{jk} = \frac{\sum_i |x_{ij}-x_{ik}|}{\sum_i (x_{ij}+x_{ik})}, \qquad
-\text{Jaccard}_{jk} = 1 - \frac{a}{a+b+c}$$
+$$\text{Index} \sim \text{Time of day} \times \text{Habitat} + (1 \mid \text{recorder})$$
 
-where $x_{ij}$ is the activity (detection count) of species $i$ at recorder $j$, and for Jaccard $a$ is
-the number of species shared by both recorders and $b,c$ the numbers unique to each.
-
-Following the course emphasis on **effect sizes over p-values**, every distance effect is reported as
-its **slope (per +10 m) with a 95% confidence interval** (plus an R²); a CI that excludes zero
-indicates an effect. Figures show the model's fitted line with a 95% band; the points are adjusted for
-the day random effect (so day-to-day baseline differences are removed and the points sit close to the
-line), and the symbol marks whether the point is from the first or second day that spacing was used.
+We report each distance effect as its **slope (per +10 m) with a 95% confidence interval** and an R²,
+rather than a p-value, because the size and direction of an effect are more informative than
+statistical significance alone, especially in a small study. A confidence interval that excludes zero
+indicates an effect. Figures show the model's fitted line with a 95% band; points are adjusted for the
+day random effect (so day-to-day baseline differences are removed and the points sit close to the
+line), and the symbol marks the first or second replicate day.
 
 **Cleaning (tidyverse).** From the BirdNET detections we removed three frog taxa (*Pipa pipa*,
 *Sachatamia orejuela*, *Teratohyla pulveratum*) that we judged to be misclassified noise after
@@ -391,10 +393,11 @@ bind_rows(mm_h2(pw, "bray"), mm_h2(pw, "jacc")) %>%
   pub_tab("Table 5. Forest − pasture difference in distance slope (per +10 m), with 95% CI.")
 ```
 
-**Table 5** directly tests P2 (is forest steeper than pasture?). The forest − pasture difference is
-**negative**, meaning **pasture** is the steeper habitat, the *opposite* of what we predicted. The CI
-still includes zero (so it is not formally proven), but together with Table 3 everything points to the
-spatial signal being in the **open pasture**, not the forest. **P2 is not supported.**
+**Table 5** directly tests P2 (does dissimilarity rise faster with distance in forest than pasture?).
+The forest − pasture difference is **negative**, meaning **dissimilarity increases faster with distance
+in pasture than in forest** (a larger distance slope in pasture), the *opposite* of what we predicted.
+The CI still includes zero (so it is not formally proven), but together with Table 3 everything points
+to the spatial signal being in the **open pasture**, not the forest. **P2 is not supported.**
 
 ## Acoustic indices: distance-decay (P4)
 
@@ -512,8 +515,9 @@ thresholds; in forest the same trend is weak and unresolved. Practically, by ~60
 already share noticeably fewer species than adjacent ones, so spacing on the order of tens of metres
 begins to buy genuinely independent community samples in open habitat.
 
-The **habitat prediction (P2: forest steeper)** was **not supported**; if anything the steeper decay is
-in pasture. The mechanistic expectation (forest attenuates sound, giving faster decay) is not borne out. A
+The **habitat prediction (P2: dissimilarity rising faster with distance in forest)** was **not
+supported**; if anything dissimilarity rose faster with distance in pasture. The mechanistic
+expectation (forest attenuates sound, giving faster decay) is not borne out. A
 plausible reading is that at 15–60 m the **pasture is the more spatially heterogeneous** habitat, 
 patchy edges, scattered shrubs, localised clusters of callers, so neighbouring pasture recorders
 sample more distinct assemblages, while the forest interior is acoustically more uniform. This is a

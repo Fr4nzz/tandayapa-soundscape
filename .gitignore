@@ -68,3 +68,6 @@ __pycache__/
 
 # --- Keep the rendered report (referenced from README) ------------------------
 !/reports/*.html
+
+# keep the Pages root redirect
+!/index.html

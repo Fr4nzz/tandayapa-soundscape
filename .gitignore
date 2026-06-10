@@ -52,3 +52,19 @@ CONFIG.TXT
 .DS_Store
 Thumbs.db
 .vscode/
+
+# --- New layout: raw audio archive + leftover old audio dir (kept out of git) -
+/data/raw/audio/
+/data/raw/models/
+/data/audiomoths/
+# empty leftover root device dirs
+/F[0-9]*_A[0-9]*
+/P[0-9]*_A[0-9]*
+
+# --- Python caches ------------------------------------------------------------
+__pycache__/
+*.pyc
+.venv*/
+
+# --- Keep the rendered report (referenced from README) ------------------------
+!/reports/*.html

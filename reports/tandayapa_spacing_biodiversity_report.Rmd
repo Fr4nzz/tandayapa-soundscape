@@ -1,0 +1,504 @@
+---
+title: "Acoustic edge-gradient: how recorder spacing shapes the soundscape in forest and pasture at Tandayapa"
+subtitle: "Tandayapa Cloud Forest Station, Ecuador · AudioMoth passive acoustic monitoring · reproducible analysis"
+author: "Franz Chandi, Maria Andrade, Priscila Cajas, Noemi Castro"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output:
+  html_document:
+    theme: flatly
+    toc: true
+    toc_float: true
+    number_sections: true
+    df_print: kable
+    fig_width: 6.6
+    fig_height: 4.4
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.align = "center")
+suppressMessages({
+  library(tidyverse)   # dplyr, tidyr, readr, purrr, stringr, ggplot2 — cleaning + plots
+  library(vegan)       # community dissimilarities (Bray–Curtis, Jaccard)
+  library(lme4); library(lmerTest)   # linear mixed models (deploy as random effect)
+  library(knitr)
+})
+CONF_MIN <- 0.5            # primary BirdNET confidence threshold (sensitivity to 0.25 / 0.7 below)
+MAXDIST  <- 60            # analyse pairs up to 60 m (drop the lone, unreplicated 120 m pair)
+cols <- c(forest = "#2C5F2D", pasture = "#D9A441")
+
+# ---- All analyses read the COMMITTED processed data, so this report knits without the raw audio ----
+PROC <- "../data/processed"
+det  <- read_csv(file.path(PROC, "birdnet_detections.csv"), show_col_types = FALSE)
+idx  <- read_csv(file.path(PROC, "acoustic_indices_per_recorder.csv"), show_col_types = FALSE)
+idxd <- read_csv(file.path(PROC, "acoustic_indices_by_diel.csv"), show_col_types = FALSE)
+clim <- read_csv(file.path(PROC, "datalogger_microclimate.csv"), show_col_types = FALSE)
+day_spacing <- det %>% distinct(deploy, spacing_m) %>% deframe()
+```
+
+# Introduction
+
+Passive acoustic monitoring (PAM) with low-cost recorders such as AudioMoth is now a standard tool
+for surveying soniferous biodiversity — birds, frogs, and insects — over long periods with minimal
+disturbance (Ross et al., 2023). A practical question every PAM study must answer, but rarely tests
+directly, is **how far apart recorders should be placed**. If two recorders sit close together they
+"hear" almost the same animals and act as one sample (pseudoreplication); if they are far apart they
+capture independent slices of the community and provide genuine spatial replication. The right
+spacing depends on how fast the recorded soundscape changes with distance, which should depend on the
+habitat, because vegetation and terrain control how far sound travels (Bradfer-Lawrence et al., 2023).
+
+Tandayapa spans a mosaic of dense forest and open pasture — an ideal contrast for asking whether
+recorder spacing behaves differently in a structurally complex habitat versus an open one. We answer
+the question in two currencies and compare them: (1) the **species community** detected by an
+automated classifier (BirdNET), which is what a biodiversity study ultimately cares about, and (2)
+three cheap, classifier-free **acoustic indices** (ACI, BI, ADI) that many PAM studies use as a
+biodiversity proxy. The comparison asks a methodological question that matters for any analysis
+pipeline: do the cheap indices give the same spacing answer as the species community? We also examine
+how the soundscape changes through the day (diel variation) and characterise the forest–pasture
+microclimate with paired temperature/humidity loggers.
+
+# Research question
+
+> **Primary:** How does the similarity of the species community recorded by two AudioMoths change with
+> the distance between them, and is that distance–community relationship different in forest than in
+> pasture?
+>
+> **Secondary (method comparison):** Do classifier-free acoustic indices (ACI, BI, ADI) reproduce the
+> same distance / habitat answer as the BirdNET species community, and how do the indices vary with
+> time of day?
+
+# Prediction
+
+The mechanism is **distance-decay of similarity**: sound attenuates as it travels, so each recorder
+samples animals within a limited *listening area*. Two nearby recorders share listening areas and
+detect a similar community; as they move apart they increasingly sample different individuals,
+microhabitats, and species, so the recorded community grows more **dissimilar with distance**. Habitat
+structure should modulate this: forest vegetation absorbs and scatters sound, giving each recorder a
+*smaller, patchier* listening area, whereas open pasture lets sound travel farther.
+
+- **P1 — Distance-decay.** Pairwise community dissimilarity (Bray–Curtis, Jaccard) increases with
+  inter-recorder distance.
+- **P2 — Habitat modulates the decay.** The increase is steeper in **forest** than pasture (forest
+  attenuates sound → more localised soundscapes).
+- **P3 — Diel variation.** Acoustic activity varies through the day; the biological band (BI) peaks
+  around dawn/day (the chorus).
+- **P4 — Index concordance.** The acoustic indices reproduce the community's distance/habitat pattern.
+
+# Study area
+
+The study was conducted at **Tandayapa Cloud Forest Station**, Pichincha Province, Ecuador, within the
+Chocó Andino Biosphere Reserve, on the western slope of the Andes (≈0.0117°, −78.6739°, ~1,680 m
+a.s.l.). Two adjacent habitats were sampled:
+
+- **Forest** — secondary montane cloud forest: dense vegetation, higher vertical structure, closed to
+  semi-closed canopy, with epiphytes, ferns, bromeliads, orchids and understory. These features matter
+  acoustically because dense vegetation attenuates and scatters sound.
+- **Pasture** — open area dominated by non-native grasses with scattered, unidentified thorny
+  shrubs/small trees and lower vegetation complexity. The open structure increases exposure to wind and
+  environmental noise, which can affect sound propagation and index values.
+
+# Experimental design
+
+We deployed AudioMoth recorders on short linear transects **20 m inside the edge** of each habitat, at
+**1.5 m height**, facing downslope (the site is on a slope), with the same protocol in both habitats and
+each point marked with flagging tape. Each transect held **three recorders** at points 1–2–3. The
+**spacing was changed between deployment days**, sampling three spacings — **15, 30, and 60 m** — and
+each spacing was deployed on **two separate days** (replicate blocks). Recorders were **swapped between
+positions** across days to reduce equipment bias.
+
+Because each transect compares point 1↔2, 2↔3 (one spacing apart) and 1↔3 (two spacings apart), the
+realised inter-recorder distances are 15, 30, 60, and 120 m. We **analyse pairs up to 60 m** and
+**exclude the single 120 m pair**: it can only come from the 60 m spacing comparing points 1↔3, and
+because the forest 60 m deployments lost their point-1 recorder, a 120 m pair exists **only in pasture,
+on one line, with no replicate**. Dropping it keeps the forest–pasture comparison on the **same
+15–60 m range** and prevents one high-leverage point from driving the result.
+
+```{r design-table}
+det %>% distinct(deploy, date, habitat, spacing_m, point_num) %>%
+  count(date, spacing_m, habitat, name = "recorders") %>%
+  pivot_wider(names_from = habitat, values_from = recorders, values_fill = 0) %>%
+  arrange(date) %>%
+  kable(caption = "Deployments: each date sampled one spacing in both habitats (recorders per habitat).")
+```
+
+# Data collection
+
+Each AudioMoth recorded from **10:40 a.m. to 9:40 a.m. the next day**, taking **three 2-minute
+recordings per hour** (2 min on / 18 min off, e.g. :00, :20, :40) — six minutes of audio per hour,
+spanning the full day–night cycle (Ross et al., 2023). Data were downloaded in the field after each
+session. We complemented the audio with **two Kestrel DROP 2 dataloggers** (one per habitat) logging
+temperature and relative humidity every 10 minutes.
+
+Detections were produced by **BirdNET** (range-filtered; birds and insects) and a complementary frog
+classifier, each verifiable by ear and spectrogram in the project web app. Acoustic indices were
+computed with **scikit-maad** (Ulloa et al., 2021). The cleaned inputs are in `data/processed/`, so
+this report is fully reproducible from this document without the raw audio.
+
+# Data analysis
+
+All effect sizes come from **linear mixed models** (`lme4`/`lmerTest`) that carry the replication: the
+**deployment day is a random intercept**, so each replicate block has its own baseline and the
+distance effect is estimated *within* the replication structure rather than from pseudo-replicated
+pairs. Following the course emphasis on **effect sizes over p-values**, every distance effect is
+reported as its **slope (change per +10 m) with a 95% confidence interval** (plus a marginal R²); a CI
+that excludes zero indicates an effect. The habitat comparison is the **forest − pasture slope
+difference** with its 95% CI. Figures show the **mixed-model fixed-effect fit with 95% bands**; points
+are adjusted for the deploy random intercept (so day-to-day baselines are removed) and the symbol marks
+the replicate day.
+
+**Cleaning (tidyverse).** From the BirdNET detections we drop three frog taxa that expert review judged
+to be noise misclassified as frogs — listed explicitly here, not hidden in a file — and keep detections
+at confidence ≥ 0.5 (with 0.25 / 0.7 as a sensitivity check). Insects were reviewed and kept.
+
+```{r clean}
+excluded_frogs <- c("Pipa pipa", "Sachatamia orejuela", "Teratohyla pulveratum")
+dets <- det %>% filter(!species %in% excluded_frogs, confidence >= CONF_MIN)
+
+# pairwise community dissimilarity (Bray–Curtis, Jaccard) for within-habitat recorder pairs, at any threshold
+build_comm_pw <- function(cmin){
+  d <- det %>% filter(!species %in% excluded_frogs, confidence >= cmin)
+  comm_long <- d %>% count(deploy, habitat, point_num, species, name = "abund")
+  samples <- comm_long %>% distinct(deploy, habitat, point_num) %>% mutate(sample = row_number())
+  mat <- comm_long %>% left_join(samples, by = c("deploy","habitat","point_num")) %>%
+    pivot_wider(id_cols = sample, names_from = species, values_from = abund, values_fill = 0)
+  M <- as.matrix(mat[,-1]); rownames(M) <- mat$sample
+  bc <- as.matrix(vegdist(M, "bray")); ja <- as.matrix(vegdist(M > 0, "jaccard"))
+  pairs <- list()
+  for (g in split(samples, list(samples$deploy, samples$habitat), drop = TRUE)) {
+    if (nrow(g) < 2) next
+    cb <- combn(seq_len(nrow(g)), 2)
+    for (k in seq_len(ncol(cb))) {
+      i <- g[cb[1,k],]; j <- g[cb[2,k],]
+      pairs[[length(pairs)+1]] <- tibble(deploy = i$deploy, habitat = i$habitat,
+        distance_m = day_spacing[i$deploy] * abs(i$point_num - j$point_num),
+        bray = bc[as.character(i$sample), as.character(j$sample)],
+        jacc = ja[as.character(i$sample), as.character(j$sample)])
+    }
+  }
+  bind_rows(pairs) %>% filter(distance_m <= MAXDIST)
+}
+
+rep_of <- function(deploy) ifelse(deploy %in% c("day1","day2","day3"), "1st day", "2nd day")
+mm_nakagawa_R2 <- function(m){
+  varF <- var(as.numeric(predict(m, re.form = NA)))
+  vc <- as.numeric(VarCorr(m)$deploy); vc <- if (length(vc) == 0) 0 else vc
+  round(varF / (varF + vc + sigma(m)^2), 3)
+}
+# per-habitat slope per +10 m + 95% CI + marginal R², from dissim ~ distance + (1|deploy)
+mm_hab <- function(d, resp){
+  map_dfr(c("forest","pasture"), function(h){
+    s <- filter(d, habitat == h)
+    m <- suppressWarnings(lmer(reformulate("distance_m + (1|deploy)", resp), data = s, REML = TRUE))
+    b <- fixef(m)[["distance_m"]]; se <- sqrt(vcov(m)["distance_m","distance_m"])
+    lo <- (b - 1.96*se)*10; hi <- (b + 1.96*se)*10
+    tibble(habitat = h, `Δ/+10m` = round(b*10,4), `CI low` = round(lo,4), `CI high` = round(hi,4),
+           `R2(dist)` = mm_nakagawa_R2(m), `CI excl 0` = ifelse(lo > 0 | hi < 0, "yes","no"), n = nrow(s))
+  })
+}
+# H2: forest − pasture slope difference from the interaction model
+mm_h2 <- function(d, resp){
+  m <- suppressWarnings(lmer(reformulate("distance_m * habitat + (1|deploy)", resp), data = d, REML = TRUE))
+  V <- as.matrix(vcov(m)); b <- fixef(m); int <- grep(":habitat", names(b), value = TRUE)
+  est <- -b[[int]]; se <- sqrt(V[int,int]); lo <- (est-1.96*se)*10; hi <- (est+1.96*se)*10
+  tibble(metric = resp, `forest−pasture Δ/+10m` = round(est*10,4), `CI low` = round(lo,4),
+         `CI high` = round(hi,4), `CI excl 0` = ifelse(lo > 0 | hi < 0, "yes","no"))
+}
+# clean distance-decay plot: model fit + 95% band + day-adjusted points, shape = replicate
+mm_decay_plot <- function(d, resp, ylab){
+  lns <- list(); pts <- list()
+  for (h in c("forest","pasture")){
+    s <- filter(d, habitat == h)
+    m <- suppressWarnings(lmer(reformulate("distance_m + (1|deploy)", resp), data = s, REML = TRUE))
+    bl <- ranef(m)$deploy[,1]; names(bl) <- rownames(ranef(m)$deploy)
+    pts[[h]] <- tibble(distance_m = s$distance_m, y = s[[resp]] - bl[as.character(s$deploy)],
+                       habitat = h, rep = rep_of(s$deploy))
+    g <- tibble(distance_m = seq(min(s$distance_m), max(s$distance_m), length = 50))
+    X <- cbind(1, g$distance_m); V <- as.matrix(vcov(m))
+    g$fit <- as.numeric(X %*% fixef(m)); g$se <- sqrt(diag(X %*% V %*% t(X)))
+    lns[[h]] <- mutate(g, habitat = h, lo = fit - 1.96*se, hi = fit + 1.96*se)
+  }
+  ggplot() +
+    geom_ribbon(data = bind_rows(lns), aes(distance_m, ymin = lo, ymax = hi, fill = habitat), alpha = .15) +
+    geom_line(data = bind_rows(lns), aes(distance_m, fit, color = habitat), linewidth = 1) +
+    geom_point(data = bind_rows(pts), aes(distance_m, y, color = habitat, shape = rep), size = 2.6, alpha = .85) +
+    scale_color_manual(values = cols) + scale_fill_manual(values = cols) +
+    scale_shape_manual(values = c("1st day" = 16, "2nd day" = 17), name = "replicate") +
+    labs(x = "Distance between recorders (m)", y = ylab) + theme_minimal()
+}
+```
+
+# Results
+
+## Detected richness
+
+```{r richness}
+dets %>% group_by(habitat, group) %>% summarise(n = n_distinct(species), .groups="drop") %>%
+  pivot_wider(names_from = group, values_from = n, values_fill = 0) %>%
+  left_join(dets %>% group_by(habitat) %>% summarise(TOTAL = n_distinct(species)), by="habitat") %>%
+  kable(caption = "Detected species richness by habitat and group (confidence ≥ 0.5).")
+```
+
+Detected richness is **nearly identical** between habitats, so the contrast is about *spatial
+structure*, not species count.
+
+## Species community: distance-decay (P1, P2)
+
+```{r community}
+pw <- build_comm_pw(CONF_MIN)
+mm_decay_plot(pw, "bray", "Bray–Curtis dissimilarity (day-adjusted)")
+```
+
+```{r community2, fig.cap="Species turnover (Jaccard) with distance (≤60 m). Mixed-model fit + 95% band; points day-adjusted, shape = replicate day."}
+mm_decay_plot(pw, "jacc", "Jaccard dissimilarity (day-adjusted)")
+```
+
+```{r community-slopes}
+slope_tab <- bind_rows(
+  mm_hab(pw, "bray") %>% mutate(metric = "Bray-Curtis", .before = 1),
+  mm_hab(pw, "jacc") %>% mutate(metric = "Jaccard", .before = 1))
+kable(slope_tab, caption = "Per-habitat distance EFFECT SIZE (mixed model, ≤60 m): slope per +10 m, 95% CI, marginal R², n.")
+```
+
+Over the balanced 15–60 m range, community dissimilarity **increases with distance in pasture** for
+both metrics, and the effect is **statistically resolved**: Bray–Curtis +0.099 per +10 m
+[95% CI +0.028, +0.169] and Jaccard +0.056 [+0.004, +0.108] — **both CIs exclude zero** (P1 supported
+in pasture). **Forest** shows a weak, positive-leaning trend whose CI **includes zero**. So the
+distance-decay is **clear in open pasture and unresolved in forest** — the *opposite* of the
+sound-attenuation prediction (P2 not supported, see below).
+
+### Robustness to the confidence threshold
+
+```{r sensitivity}
+map_dfr(c(0.25, 0.5, 0.7), function(cm)
+  mm_hab(build_comm_pw(cm), "jacc") %>% mutate(conf = cm, .before = 1) %>% select(-`R2(dist)`)) %>%
+  kable(caption = "Jaccard distance slope by confidence threshold (≤60 m). The PASTURE effect excludes zero at every threshold.")
+```
+
+The **pasture** distance-decay is **robust to the threshold** (CI excludes zero at 0.25, 0.5 and 0.7).
+The **forest** effect is weak and resolved only at the permissive 0.25 cutoff (which admits the most
+false-positive singletons), so it is not robust.
+
+### Does habitat change the decay rate? (P2)
+
+```{r interaction}
+bind_rows(mm_h2(pw, "bray"), mm_h2(pw, "jacc")) %>%
+  kable(caption = "Habitat contrast: forest − pasture difference in distance slope (per +10 m), 95% CI. Positive = forest steeper (P2).")
+```
+
+The forest − pasture difference is **negative** (pasture steeper), the *opposite* of P2; the CI still
+includes zero, so the difference is not formally resolved, but every line of evidence points to the
+spatial structure being in the **open pasture**, not forest. **P2 is not supported.**
+
+## Acoustic indices: distance-decay (P4)
+
+```{r indices}
+ip <- list()
+for (g in split(idx, list(idx$deploy, idx$habitat), drop = TRUE)) {
+  if (nrow(g) < 2) next
+  cb <- combn(seq_len(nrow(g)), 2)
+  for (k in seq_len(ncol(cb))) {
+    a <- g[cb[1,k],]; b <- g[cb[2,k],]
+    ip[[length(ip)+1]] <- tibble(deploy = a$deploy, habitat = a$habitat,
+      distance_m = a$spacing * abs(a$point - b$point),
+      dACI = abs(a$ACI-b$ACI), dBI = abs(a$BI-b$BI), dADI = abs(a$ADI-b$ADI))
+  }
+}
+ipw <- bind_rows(ip) %>% filter(distance_m <= MAXDIST)
+map_dfr(c("dACI","dBI","dADI"), function(r) mm_hab(ipw, r) %>% mutate(index = r, .before = 1)) %>%
+  kable(caption = "Acoustic-index distance EFFECT SIZE (mixed model, ≤60 m): slope of |index difference| per +10 m, 95% CI.")
+```
+
+```{r index-fig, fig.width=9, fig.height=3.8, fig.cap="Per-index distance-decay (≤60 m). Mixed-model fit + 95% band; points day-adjusted, shape = replicate. All three indices are flat — no CI excludes zero."}
+relab <- c(dACI = "ACI", dBI = "BI", dADI = "ADI")
+pts_all <- list(); ln_all <- list()
+for (r in c("dACI","dBI","dADI")) for (h in c("forest","pasture")){
+  s <- filter(ipw, habitat == h)
+  m <- suppressWarnings(lmer(reformulate("distance_m + (1|deploy)", r), data = s, REML = TRUE))
+  bl <- ranef(m)$deploy[,1]; names(bl) <- rownames(ranef(m)$deploy)
+  pts_all[[length(pts_all)+1]] <- tibble(index = relab[[r]], habitat = h, distance_m = s$distance_m,
+                                         y = s[[r]] - bl[as.character(s$deploy)], rep = rep_of(s$deploy))
+  g <- tibble(distance_m = seq(min(s$distance_m), max(s$distance_m), length = 50))
+  X <- cbind(1, g$distance_m); V <- as.matrix(vcov(m))
+  g$fit <- as.numeric(X %*% fixef(m)); g$se <- sqrt(diag(X %*% V %*% t(X)))
+  ln_all[[length(ln_all)+1]] <- tibble(index = relab[[r]], habitat = h, distance_m = g$distance_m,
+                                       fit = g$fit, lo = g$fit-1.96*g$se, hi = g$fit+1.96*g$se)
+}
+pts_all <- bind_rows(pts_all) %>% mutate(index = factor(index, c("ACI","BI","ADI")))
+ln_all  <- bind_rows(ln_all)  %>% mutate(index = factor(index, c("ACI","BI","ADI")))
+ggplot() +
+  geom_ribbon(data = ln_all, aes(distance_m, ymin = lo, ymax = hi, fill = habitat), alpha = .15) +
+  geom_line(data = ln_all, aes(distance_m, fit, color = habitat), linewidth = .9) +
+  geom_point(data = pts_all, aes(distance_m, y, color = habitat, shape = rep), size = 2, alpha = .8) +
+  scale_color_manual(values = cols) + scale_fill_manual(values = cols) +
+  scale_shape_manual(values = c("1st day" = 16, "2nd day" = 17), name = "replicate") +
+  facet_wrap(~index, scales = "free_y") +
+  labs(x = "Distance between recorders (m)", y = "|index difference| (day-adjusted)") + theme_minimal()
+```
+
+Over 15–60 m **none of the acoustic indices shows a distance-decay** — ACI, BI and ADI all have CIs
+that include zero in both habitats. The cheap indices do **not** capture the spatial turnover that the
+species community resolves in pasture (P4 not supported). (In an earlier version that kept the lone
+120 m pasture pair, ADI appeared significant; that signal came entirely from that single high-leverage
+point and vanished once it was removed — a reminder to distrust an effect that hinges on one
+observation.)
+
+## Diel variation of the indices (P3)
+
+```{r diel}
+idxd$diel <- factor(idxd$diel, levels = c("night","dawn","day","dusk"))
+map_dfr(c("ACI","BI","ADI"), function(v){
+  m <- suppressWarnings(lmer(reformulate("diel*habitat + (1|device)", v), data = idxd, REML = TRUE))
+  b <- fixef(m); V <- as.matrix(vcov(m))
+  map_dfr(c("forest","pasture"), function(h)
+    map_dfr(c("dawn","day","dusk"), function(p){
+      terms <- if (h=="forest") paste0("diel",p) else c(paste0("diel",p), paste0("diel",p,":habitatpasture"))
+      est <- sum(b[terms]); se <- sqrt(sum(V[terms,terms]))
+      tibble(index=v, habitat=h, period=p, `vs night`=round(est,3),
+             `CI low`=round(est-1.96*se,3), `CI high`=round(est+1.96*se,3),
+             `CI excl 0`=ifelse((est-1.96*se)>0|(est+1.96*se)<0,"yes","no"))
+    }))
+}) %>% kable(caption = "Diel EFFECT SIZE: each period vs night (mixed model, recorder random intercept), 95% CI.")
+```
+
+```{r diel-fig, fig.width=9, fig.height=3.4, fig.cap="Diel variation of ACI, BI and ADI by habitat (mean ± 95% CI). BI peaks at dawn/day (the chorus); ADI dips at midday; pasture reads louder than forest."}
+idxd %>% pivot_longer(c(ACI,BI,ADI), names_to="index", values_to="value") %>%
+  mutate(index = factor(index, c("ACI","BI","ADI"))) %>%
+  group_by(index, habitat, diel) %>%
+  summarise(mean=mean(value), se=sd(value)/sqrt(n()), .groups="drop") %>%
+  mutate(lo=mean-1.96*se, hi=mean+1.96*se) %>%
+  ggplot(aes(diel, mean, color=habitat, group=habitat)) +
+  geom_line(linewidth=.9) + geom_point(size=2.6) + geom_errorbar(aes(ymin=lo, ymax=hi), width=.15) +
+  scale_color_manual(values=cols) + facet_wrap(~index, scales="free_y") +
+  labs(x="Time of day", y="Index value (mean ± 95% CI)") + theme_minimal()
+```
+
+The indices clearly track **time of day**: **BI** (2–8 kHz biological band) rises at **dawn and day**
+(the chorus; forest dawn +2.5, day +2.7, pasture dawn +2.0, CIs exclude zero), **ADI dips at midday**
+(daytime energy concentrates into dominant frequency bands, lowering evenness), and **pasture reads
+louder than forest** across the day. So the same indices that miss the subtle spatial signal capture
+the strong temporal one well (P3 supported) — time of day must be balanced when comparing recorders.
+
+## Microclimate: forest vs pasture
+
+```{r microclimate, fig.width=9, fig.height=3.6, fig.cap="Mean temperature and relative humidity by hour (Kestrel DROP 2, June 3–7). Forest buffers both: pasture spikes hotter and drier at midday."}
+clim %>% pivot_longer(c(temp_c, rh_pct), names_to="var", values_to="value") %>%
+  mutate(var = recode(var, temp_c="Temperature (°C)", rh_pct="Relative humidity (%)")) %>%
+  group_by(var, habitat, hour) %>% summarise(mean = mean(value), .groups="drop") %>%
+  ggplot(aes(hour, mean, color=habitat)) + geom_line(linewidth=.9) + geom_point(size=1.6) +
+  scale_color_manual(values=cols) + facet_wrap(~var, scales="free_y") +
+  labs(x="Hour of day", y=NULL) + theme_minimal()
+```
+
+```{r microclimate-tab}
+clim %>% group_by(habitat) %>%
+  summarise(`mean T (°C)` = round(mean(temp_c),1), `max T` = round(max(temp_c),1),
+            `mean RH (%)` = round(mean(rh_pct),1),
+            `% time RH ≥ 99` = round(100*mean(rh_pct >= 99)), .groups="drop") %>%
+  kable(caption = "Microclimate summary (study window). Forest is cooler and far more often saturated.")
+```
+
+The **forest buffers the microclimate**: at midday the pasture warms to ~22 °C and its humidity falls
+to ~81%, while the forest stays ~19.6 °C and ~97% RH; the forest is near-saturation **84%** of the time
+versus **52%** in pasture. This is consistent with the habitat-structure mechanism (closed forest
+canopy moderating temperature and moisture extremes) and with the diel result that the open pasture
+"sounds" busier by day.
+
+# Discussion
+
+Over a balanced 15–60 m range, the **species community becomes measurably more different as recorders
+are spaced farther apart — in the open pasture** (P1 supported there), robustly across confidence
+thresholds; in forest the same trend is weak and unresolved. Practically, by ~60 m pasture recorders
+already share noticeably fewer species than adjacent ones, so spacing on the order of tens of metres
+begins to buy genuinely independent community samples in open habitat.
+
+The **habitat prediction (P2: forest steeper)** was **not supported**; if anything the steeper decay is
+in pasture. The mechanistic expectation (forest attenuates sound → faster decay) is not borne out. A
+plausible reading is that at 15–60 m the **pasture is the more spatially heterogeneous** habitat —
+patchy edges, scattered shrubs, localised clusters of callers — so neighbouring pasture recorders
+sample more distinct assemblages, while the forest interior is acoustically more uniform. This is a
+tentative interpretation from a small pilot, but it is consistent across metrics and thresholds, and
+the microclimate data show the forest is indeed the more homogeneous, buffered habitat.
+
+The **method comparison (P4)** is a clean negative: **none of the acoustic indices resolves the
+distance-decay that the species community does**. Indices summarise *how much* and *how spread-out* the
+sound is, not *which species* are calling, so a change in community composition with distance leaves
+them unmoved. The lesson is direct — **a biodiversity question about recorder spacing must be answered
+with species-level data; acoustic indices alone would have wrongly concluded that spacing does not
+matter**. The indices are not useless, though: they cleanly track **time of day** (P3 — the dawn/day
+chorus in BI, the midday ADI dip), so they remain a cheap tool for temporal questions.
+
+# Conclusion
+
+At Tandayapa, over 15–60 m, the **species community recorded by two AudioMoths becomes measurably more
+different as the recorders are spaced farther apart — in the open pasture**, a distance-decay robust
+across confidence thresholds; in forest the trend is weak and unconfirmed, and forest did **not** decay
+faster than pasture (against P2). The **acoustic indices do not detect this spatial structure at all**,
+so biodiversity questions about recorder spacing must be answered with **species-level data**, not
+indices alone — although the indices cleanly capture the **diel** cycle. The forest **buffers
+temperature and humidity** relative to the exposed pasture. The practical message: **recorder spacing
+affects sample independence and should be standardised and reported, and time of day balanced when
+comparing recorders.**
+
+# Limitations
+
+1. **Small sample and recorder failures.** Only 10–12 recorder pairs per habitat; several AudioMoths
+   failed (e.g. unit A08 damaged; A04/A06/A03 missed a day). Losses also forced us to drop the 120 m
+   distance (it survived in pasture only), so the design is balanced but capped at 60 m.
+2. **Spatial non-independence.** The three recorders on a transect shared points across distance
+   treatments, so pairs within a deployment are not fully independent; the deploy random intercept
+   mitigates but does not remove this (Sugai et al., 2019; Bradfer-Lawrence et al., 2023).
+3. **Detection and index caveats.** Counts index vocal *activity*, not abundance; BirdNET can miss
+   local or endemic taxa, so results should be validated by ear (Fairbairn et al., 2025; Schiavo et
+   al., 2025). Indices were averaged over a sample of clips per recorder.
+4. **Microclimate replication.** Only two dataloggers (one per habitat), so microclimate is described
+   at the habitat level and is confounded with habitat; rain could not be separated from the forest's
+   near-constant saturation.
+5. **Topography.** The transects were on a slope, which can influence both sound propagation and
+   recorder placement.
+
+# Future directions
+
+Future work should **increase the number of sampling days** and **replicate the same spacings (15, 30,
+60 m) on independent transects** within each habitat (rather than extending the maximum distance), to
+confirm the pasture distance-decay and reduce spatial dependence. BirdNET could be **fine-tuned with
+local recordings** to improve detection of Chocó-Andino taxa (Schiavo et al., 2025). Adding more
+habitat types, detailed **vegetation-structure** measurements (canopy openness, density, vertical
+layers, e.g. LiDAR), and more **environmental variables** (a rain gauge, wind, leaf-wetness) would
+clarify how vegetation and weather shape both sound propagation and acoustic activity (Hao et al.,
+2024; Guagliumi et al., 2025).
+
+# References
+
+Bradfer-Lawrence, T., Gardner, N., Bunnefeld, L., Bunnefeld, N., Willis, S. G., & Dent, D. H. (2023).
+Using acoustic indices in ecology: guidance on study design, analyses and interpretation. *Methods in
+Ecology and Evolution.*
+
+Fairbairn, A. J., et al. (2025). BirdNET can be as good as experts for acoustic bird monitoring if used
+carefully. *PLOS ONE,* 20(10), e0330836.
+
+Guagliumi, G., et al. (2025). The interaction between vegetation structure and acoustic environment.
+*Sustainability,* 17(9), 4204.
+
+Hao, Z., et al. (2024). Can urban forests provide acoustic refuges for birds? *Journal of Forestry
+Research.*
+
+Kahl, S., Wood, C. M., Eibl, M., & Klinck, H. (2021). BirdNET: a deep learning solution for avian
+diversity monitoring. *Ecological Informatics,* 61, 101236.
+
+Ross, S. R. P.-J., et al. (2023). Passive acoustic monitoring provides a fresh perspective on
+fundamental ecological questions. *Functional Ecology,* 37(4), 959–975.
+
+Schiavo, G., et al. (2025). Fine-tuning BirdNET for the automatic ecoacoustic monitoring of bird
+species in the Italian Alpine forests. *Information,* 16(8), 628.
+
+Sugai, L. S. M., Silva, T. S. F., Ribeiro, J. W., Jr., & Llusia, D. (2019). A roadmap for survey
+designs in terrestrial acoustic monitoring. *Remote Sensing in Ecology and Conservation.*
+
+Ulloa, J. S., Haupert, S., Latorre, J. F., Aubin, T., & Sueur, J. (2021). scikit-maad: an open-source
+modular toolbox for quantitative soundscape analysis in Python. *Methods in Ecology and Evolution,*
+12(12), 2334–2340.
+
+---
+
+```{r session, echo=FALSE}
+# sessionInfo()  # uncomment for the full reproducibility footprint
+```

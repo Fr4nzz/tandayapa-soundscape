@@ -6,7 +6,6 @@ import { SpeciesRow, type SpeciesGroup } from './components/SpeciesRow'
 
 const DATA = '/outputs/web'
 const PAGE = 24        // detection cards per page (grid view)
-const SP_PAGE = 8      // species rows per page (by-species view)
 
 export default function App() {
   const [index, setIndex] = useState<IndexFile | null>(null)
@@ -72,10 +71,10 @@ export default function App() {
 
   const bySpecies = f.view === 'species'
   const unitCount = bySpecies ? speciesGroups.length : filtered.length
-  const per = bySpecies ? SP_PAGE : PAGE
-  const pages = Math.max(1, Math.ceil(unitCount / per))
+  // species view renders ALL species at once (no pagination); grid view stays paginated
+  const pages = bySpecies ? 1 : Math.max(1, Math.ceil(filtered.length / PAGE))
   const pageItems = filtered.slice(page * PAGE, page * PAGE + PAGE)
-  const pageGroups = speciesGroups.slice(page * SP_PAGE, page * SP_PAGE + SP_PAGE)
+  const pageGroups = speciesGroups
 
   return (
     <div className="relative z-10 mx-auto max-w-[1500px] px-4 pb-24 sm:px-6">

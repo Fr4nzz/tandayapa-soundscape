@@ -71,3 +71,7 @@ __pycache__/
 
 # keep the Pages root redirect
 !/index.html
+
+# Opus web-audio (large; host on R2/Internet Archive, not git)
+/data/web_audio/
+*.opus

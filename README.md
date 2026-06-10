@@ -16,9 +16,11 @@ buffered microclimate** (cooler, far more humid than the exposed pasture).
 
 ## View the report (no install needed)
 
-Open the rendered report:
-**[`reports/tandayapa_spacing_biodiversity_report.html`](reports/tandayapa_spacing_biodiversity_report.html)**
-— on GitHub, open the file and click **"Download raw file"** to view it in your browser.
+**▶ Open it in your browser (GitHub Pages):**
+**https://fr4nzz.github.io/tandayapa-soundscape/reports/tandayapa_spacing_biodiversity_report.html**
+
+(Or open `reports/tandayapa_spacing_biodiversity_report.html` in the repo and click
+**"Download raw file"**.)
 
 ## Reproduce the analysis in RStudio
 

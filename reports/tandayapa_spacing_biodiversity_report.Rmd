@@ -1,6 +1,6 @@
 ---
-title: "Acoustic edge-gradient: how recorder spacing shapes the soundscape in forest and pasture at Tandayapa"
-subtitle: "Tandayapa Cloud Forest Station, Ecuador · AudioMoth passive acoustic monitoring · reproducible analysis"
+title: "When do two recorders hear the same community — and does it differ between forest and pasture?"
+subtitle: "Recorder spacing and soundscape distance-decay · Tandayapa Cloud Forest Station, Ecuador · AudioMoth passive acoustic monitoring"
 author: "Franz Chandi, Maria Andrade, Priscila Cajas, Noemi Castro"
 date: "`r format(Sys.Date(), '%d %B %Y')`"
 output:
@@ -135,6 +135,9 @@ Detections were produced by **BirdNET** (range-filtered; birds and insects) and 
 classifier, each verifiable by ear and spectrogram in the project web app. Acoustic indices were
 computed with **scikit-maad** (Ulloa et al., 2021). The cleaned inputs are in `data/processed/`, so
 this report is fully reproducible from this document without the raw audio.
+
+> **Reproducibility — all code and processed data:** <https://github.com/Fr4nzz/tandayapa-soundscape>
+> (clone, open the RStudio project, and knit `reports/…​.Rmd`; see the repo README).
 
 # Data analysis
 

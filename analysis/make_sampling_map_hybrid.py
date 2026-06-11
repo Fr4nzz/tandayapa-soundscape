@@ -86,6 +86,10 @@ def main() -> None:
         trail_lons, trail_lats = parse_gpx_trail(TRAIL)
     trail_x, trail_y = merc(trail_lons, trail_lats) if trail_lons else ([], [])
 
+    # Compute study area center (centroid of all points)
+    center_x = plot["x"].mean()
+    center_y = plot["y"].mean()
+
     # Get trail start and end for labels
     trail_start_x, trail_start_y = trail_x[0], trail_y[0] if len(trail_x) > 0 else (None, None)
     trail_end_x, trail_end_y = trail_x[-1], trail_y[-1] if len(trail_x) > 0 else (None, None)
@@ -100,7 +104,7 @@ def main() -> None:
     # === MERGED FIGURE: side-by-side trail + zoomed points ===
     fig, (ax_left, ax_right) = plt.subplots(1, 2, figsize=(18, 9))
 
-    # --- LEFT: Trail map with small sampling points ---
+    # --- LEFT: Trail map with small sampling points + big study area / start / end points ---
     if len(trail_x) > 0:
         ax_left.plot(trail_x, trail_y, "-", color=COLS["trail"], lw=2.5, alpha=.85, zorder=4)
 
@@ -111,19 +115,30 @@ def main() -> None:
         ax_left.plot(sub["x"], sub["y"], "-", color=color, lw=1.5, alpha=.7, zorder=5)
         ax_left.scatter(sub["x"], sub["y"], s=60, color=color, edgecolor="white", lw=1, zorder=6)
 
-    # Label trail start and end
+    # Big point at study area center
+    ax_left.scatter([center_x], [center_y], s=200, color=COLS["study_area"], edgecolor="white", lw=2, zorder=6)
+    ax_left.annotate("Study area", (center_x, center_y), xytext=(18, 18), textcoords="offset points",
+                ha="center", va="center", fontsize=9, fontweight="bold", color="white",
+                arrowprops=dict(arrowstyle="-", color="white", lw=.6, alpha=.65),
+                bbox=dict(boxstyle="round,pad=0.2", fc=COLS["study_area"], ec="white", alpha=.9), zorder=7)
+
+    # Big point and label for trail start (Tandayapa Station)
     if trail_start_x is not None:
+        ax_left.scatter([trail_start_x], [trail_start_y], s=200, color=COLS["study_area"], edgecolor="white", lw=2, zorder=6)
         ax_left.annotate("Tandayapa Station", (trail_start_x, trail_start_y), xytext=(-15, -30),
                         textcoords="offset points", ha="center", va="center",
-                        fontsize=8, fontweight="bold", color="white",
+                        fontsize=9, fontweight="bold", color="white",
                         arrowprops=dict(arrowstyle="-", color="white", lw=.6, alpha=.65),
-                        bbox=dict(boxstyle="round,pad=0.16", fc="black", ec="white", alpha=.85), zorder=7)
+                        bbox=dict(boxstyle="round,pad=0.2", fc=COLS["study_area"], ec="white", alpha=.9), zorder=7)
+
+    # Big point and label for trail end (Domos)
     if trail_end_x is not None:
+        ax_left.scatter([trail_end_x], [trail_end_y], s=200, color=COLS["study_area"], edgecolor="white", lw=2, zorder=6)
         ax_left.annotate("Domos", (trail_end_x, trail_end_y), xytext=(15, 15),
                         textcoords="offset points", ha="center", va="center",
-                        fontsize=8, fontweight="bold", color="white",
+                        fontsize=9, fontweight="bold", color="white",
                         arrowprops=dict(arrowstyle="-", color="white", lw=.6, alpha=.65),
-                        bbox=dict(boxstyle="round,pad=0.16", fc="black", ec="white", alpha=.85), zorder=7)
+                        bbox=dict(boxstyle="round,pad=0.2", fc=COLS["study_area"], ec="white", alpha=.9), zorder=7)
 
     # Set bounds for left panel to show full trail + points
     if len(trail_x) > 0:

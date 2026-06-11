@@ -27,9 +27,10 @@ CONFIG.TXT
 !/outputs/gallery_site_template/
 !/outputs/analysis/
 !/outputs/analysis/sampling_gps_points.png
+!/outputs/analysis/sampling_trail_map.png
 /outputs/analysis/*.csv
 /outputs/analysis/*.txt
-/outputs/analysis/*.png
+!/outputs/analysis/*.png
 
 # --- Web app build + deps (run `npm install` / `npm run build`) ---------------
 /webapp/node_modules/

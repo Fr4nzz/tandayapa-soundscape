@@ -118,7 +118,7 @@ def main() -> None:
     # Big point at study area center
     ax_left.scatter([center_x], [center_y], s=200, color=COLS["study_area"], edgecolor="white", lw=2, zorder=6)
     ax_left.annotate("Study area", (center_x, center_y), xytext=(18, 18), textcoords="offset points",
-                ha="center", va="center", fontsize=9, fontweight="bold", color="white",
+                ha="center", va="center", fontsize=11, fontweight="bold", color="white",
                 arrowprops=dict(arrowstyle="-", color="white", lw=.6, alpha=.65),
                 bbox=dict(boxstyle="round,pad=0.2", fc=COLS["study_area"], ec="white", alpha=.9), zorder=7)
 
@@ -127,7 +127,7 @@ def main() -> None:
         ax_left.scatter([trail_start_x], [trail_start_y], s=200, color=COLS["study_area"], edgecolor="white", lw=2, zorder=6)
         ax_left.annotate("Tandayapa Station", (trail_start_x, trail_start_y), xytext=(-15, -30),
                         textcoords="offset points", ha="center", va="center",
-                        fontsize=9, fontweight="bold", color="white",
+                        fontsize=11, fontweight="bold", color="white",
                         arrowprops=dict(arrowstyle="-", color="white", lw=.6, alpha=.65),
                         bbox=dict(boxstyle="round,pad=0.2", fc=COLS["study_area"], ec="white", alpha=.9), zorder=7)
 
@@ -136,7 +136,7 @@ def main() -> None:
         ax_left.scatter([trail_end_x], [trail_end_y], s=200, color=COLS["study_area"], edgecolor="white", lw=2, zorder=6)
         ax_left.annotate("Domos", (trail_end_x, trail_end_y), xytext=(15, 15),
                         textcoords="offset points", ha="center", va="center",
-                        fontsize=9, fontweight="bold", color="white",
+                        fontsize=11, fontweight="bold", color="white",
                         arrowprops=dict(arrowstyle="-", color="white", lw=.6, alpha=.65),
                         bbox=dict(boxstyle="round,pad=0.2", fc=COLS["study_area"], ec="white", alpha=.9), zorder=7)
 
@@ -161,9 +161,9 @@ def main() -> None:
     ax_left.add_patch(FancyArrowPatch((nax, nay), (nax, nay + (y1-y0)*.09), arrowstyle="-|>", mutation_scale=18, color="white", lw=2.2, zorder=8))
     ax_left.text(nax, nay + (y1-y0)*.10, "N", ha="center", va="bottom", color="white", fontsize=12, fontweight="bold", zorder=8)
     ax_left.set_xticks([]); ax_left.set_yticks([])
-    ax_left.set_title("(A) Trail from Tandayapa Station to Domos", fontsize=11, fontweight="bold")
+    ax_left.set_title("(A) Trail from Tandayapa Station to Domos", fontsize=13, fontweight="bold")
     ax_left.text(.01, .01, "Imagery © Esri, Maxar, Earthstar Geographics",
-                transform=ax_left.transAxes, fontsize=7, color="white", alpha=.8)
+                transform=ax_left.transAxes, fontsize=8, color="white", alpha=.8)
 
     # --- RIGHT: Zoomed sampling points ---
     for hab, sub in plot.groupby("habitat"):
@@ -175,7 +175,7 @@ def main() -> None:
         for _, r in sub.iterrows():
             dx, dy = label_offsets.get((hab, int(r["pos"])), (0, 22))
             ax_right.annotate(r["label"], (r["x"], r["y"]), xytext=(dx, dy), textcoords="offset points",
-                        ha="center", va="center", fontsize=7.5, fontweight="bold", color="white",
+                        ha="center", va="center", fontsize=10, fontweight="bold", color="white",
                         arrowprops=dict(arrowstyle="-", color="white", lw=.6, alpha=.65),
                         bbox=dict(boxstyle="round,pad=0.16", fc="black", ec="none", alpha=.65), zorder=7)
 
@@ -188,15 +188,15 @@ def main() -> None:
     x0, x1 = ax_right.get_xlim(); y0, y1 = ax_right.get_ylim()
     bx = x0 + (x1 - x0) * .06; by = y0 + (y1 - y0) * .06
     ax_right.plot([bx, bx + 50], [by, by], color="white", lw=3, zorder=8)
-    ax_right.text(bx + 25, by + (y1-y0)*.012, "50 m", color="white", ha="center", va="bottom", fontsize=9, fontweight="bold", zorder=8)
+    ax_right.text(bx + 25, by + (y1-y0)*.012, "50 m", color="white", ha="center", va="bottom", fontsize=11, fontweight="bold", zorder=8)
     nax = x1 - (x1-x0)*.07; nay = y1 - (y1-y0)*.14
     ax_right.add_patch(FancyArrowPatch((nax, nay), (nax, nay + (y1-y0)*.09), arrowstyle="-|>", mutation_scale=18, color="white", lw=2.2, zorder=8))
-    ax_right.text(nax, nay + (y1-y0)*.10, "N", ha="center", va="bottom", color="white", fontsize=12, fontweight="bold", zorder=8)
+    ax_right.text(nax, nay + (y1-y0)*.10, "N", ha="center", va="bottom", color="white", fontsize=14, fontweight="bold", zorder=8)
     ax_right.set_xticks([]); ax_right.set_yticks([])
-    ax_right.set_title("(B) Sampling points (forest raw GPS, pasture corrected)", fontsize=11, fontweight="bold")
-    ax_right.legend(loc="lower right", framealpha=.86, fontsize=8)
+    ax_right.set_title("(B) Sampling points (forest raw GPS, pasture corrected)", fontsize=13, fontweight="bold")
+    ax_right.legend(loc="lower right", framealpha=.86, fontsize=10)
     ax_right.text(.01, .01, "Imagery © Esri, Maxar, Earthstar Geographics",
-                transform=ax_right.transAxes, fontsize=7, color="white", alpha=.8)
+                transform=ax_right.transAxes, fontsize=8, color="white", alpha=.8)
 
     fig.tight_layout()
     fig.savefig(OUT_MERGED, dpi=200, bbox_inches="tight")
@@ -213,7 +213,7 @@ def main() -> None:
         for _, r in sub.iterrows():
             dx, dy = label_offsets.get((hab, int(r["pos"])), (0, 22))
             ax1.annotate(r["label"], (r["x"], r["y"]), xytext=(dx, dy), textcoords="offset points",
-                        ha="center", va="center", fontsize=7.5, fontweight="bold", color="white",
+                        ha="center", va="center", fontsize=10, fontweight="bold", color="white",
                         arrowprops=dict(arrowstyle="-", color="white", lw=.6, alpha=.65),
                         bbox=dict(boxstyle="round,pad=0.16", fc="black", ec="none", alpha=.65), zorder=7)
     pad = 45
@@ -223,15 +223,15 @@ def main() -> None:
     x0, x1 = ax1.get_xlim(); y0, y1 = ax1.get_ylim()
     bx = x0 + (x1 - x0) * .06; by = y0 + (y1 - y0) * .06
     ax1.plot([bx, bx + 50], [by, by], color="white", lw=3, zorder=8)
-    ax1.text(bx + 25, by + (y1-y0)*.012, "50 m", color="white", ha="center", va="bottom", fontsize=9, fontweight="bold", zorder=8)
+    ax1.text(bx + 25, by + (y1-y0)*.012, "50 m", color="white", ha="center", va="bottom", fontsize=11, fontweight="bold", zorder=8)
     nax = x1 - (x1-x0)*.07; nay = y1 - (y1-y0)*.14
     ax1.add_patch(FancyArrowPatch((nax, nay), (nax, nay + (y1-y0)*.09), arrowstyle="-|>", mutation_scale=18, color="white", lw=2.2, zorder=8))
-    ax1.text(nax, nay + (y1-y0)*.10, "N", ha="center", va="bottom", color="white", fontsize=12, fontweight="bold", zorder=8)
+    ax1.text(nax, nay + (y1-y0)*.10, "N", ha="center", va="bottom", color="white", fontsize=14, fontweight="bold", zorder=8)
     ax1.set_xticks([]); ax1.set_yticks([])
-    ax1.set_title("Tandayapa recorder sampling map — forest raw GPS, pasture corrected GPS", fontsize=11, fontweight="bold")
-    ax1.legend(loc="lower right", framealpha=.86, fontsize=8)
+    ax1.set_title("Tandayapa recorder sampling map — forest raw GPS, pasture corrected GPS", fontsize=13, fontweight="bold")
+    ax1.legend(loc="lower right", framealpha=.86, fontsize=10)
     ax1.text(.01, .01, "Imagery © Esri, Maxar, Earthstar Geographics",
-            transform=ax1.transAxes, fontsize=7, color="white", alpha=.8)
+            transform=ax1.transAxes, fontsize=8, color="white", alpha=.8)
     fig1.savefig(OUT_POINTS, dpi=200, bbox_inches="tight")
     print("wrote", OUT_POINTS)
 

@@ -45,6 +45,33 @@ def main():
     d_m = np.hypot((g["lat"] - clat) * 111000, (g["lon"] - clon) * 111000 * np.cos(np.radians(clat)))
     dropped = g[d_m > 150]
     g = g[d_m <= 150].copy()
+
+    # Raw GPS error (~15 m) is comparable to the 15-60 m spacing, so plotting the raw
+    # reads makes the transects zig-zag. Instead we draw the *design* to scale: straight
+    # transects with points at their true positions (0/15/30/60/120 m), increasing east.
+    fpos = g[g.habitat == "forest"].set_index("pos")
+    f0 = fpos.loc[0]; f120 = fpos.loc[120]
+    de = (f120["lon"] - f0["lon"]) * 111320 * np.cos(np.radians(clat))   # east metres 0->120
+    dn = (f120["lat"] - f0["lat"]) * 110570                              # north metres
+    mag = np.hypot(de, dn); ue, un = de / mag, dn / mag                  # unit bearing (eastward)
+    POS = [0, 15, 30, 60, 120]
+
+    def line(lat0, lon0):
+        rows = []
+        for p in POS:
+            rows.append(dict(pos=p,
+                             lat=lat0 + p * un / 110570,
+                             lon=lon0 + p * ue / (111320 * np.cos(np.radians(clat)))))
+        return pd.DataFrame(rows)
+
+    forest = line(f0["lat"], f0["lon"]); forest["habitat"] = "forest"
+    # anchor the pasture line through the real pasture cluster centroid
+    pc = g[g.habitat == "pasture"]
+    mp = pc["pos"].mean()
+    p0lat = pc["lat"].mean() - mp * un / 110570
+    p0lon = pc["lon"].mean() - mp * ue / (111320 * np.cos(np.radians(clat)))
+    pasture = line(p0lat, p0lon); pasture["habitat"] = "pasture"
+    g = pd.concat([forest, pasture], ignore_index=True)
     g["x"], g["y"] = merc(g["lon"].values, g["lat"].values)
 
     fig, ax = plt.subplots(figsize=(8.5, 8))
@@ -88,7 +115,7 @@ def main():
 
     ax.set_xticks([]); ax.set_yticks([])
     ax.set_title("Recorder sampling design — Tandayapa Cloud Forest Station, Ecuador\n"
-                 "AudioMoth transects in forest vs pasture (points at 0–120 m)",
+                 "AudioMoth transects in forest vs pasture · points to scale at 0, 15, 30, 60, 120 m",
                  fontsize=12, fontweight="bold", pad=10)
     leg = ax.legend(loc="lower right", framealpha=.85, fontsize=10)
     leg.set_zorder(7)

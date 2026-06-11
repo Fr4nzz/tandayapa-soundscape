@@ -20,6 +20,20 @@ export interface Detection {
   spacing: number      // recorder spacing for the day (m)
 }
 
+export interface Recording {
+  deploy: string       // day1..day6
+  date: string         // "YYYY-MM-DD"
+  datetime: string     // "YYYY-MM-DD HH:MM:SS"
+  hour: number
+  daynight: 'day' | 'night'
+  habitat: string
+  spacing: number
+  point: number
+  recorder: string     // "F1".."P3"
+  moth: string
+  url: string          // R2 .opus URL
+}
+
 export interface DaySummary {
   day: string
   spacing: number

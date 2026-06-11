@@ -59,7 +59,51 @@ def main():
     print(f"detections: {total}; rewritten to R2: {rew}; unmapped audio prefixes: {len(miss)}")
     for m in list(miss)[:5]:
         print("  unmapped:", m)
+
+    build_audio_manifest()
     print(f"wrote {OUT}")
+
+
+def build_audio_manifest():
+    """List every recording clip (for the 'browse by recording' view), from the
+    local data/web_audio mirror + deployments.csv metadata, with R2 URLs."""
+    WEBAUDIO = ROOT / "data" / "web_audio"
+    if not WEBAUDIO.exists():
+        print("  (data/web_audio missing, skipping audio manifest)"); return
+    # "<date>/<folder>" -> deployment metadata
+    meta = {}
+    for r in csv.DictReader(open(META, encoding="utf-8")):
+        if r["status"] != "analysed":
+            continue
+        key = "/".join(r["new_rel_path"].strip("/").split("/")[-2:])
+        meta[key] = r
+    ts = re.compile(r"(\d{8})_(\d{6})")
+    rows = []
+    for p in sorted(WEBAUDIO.rglob("*.opus")):
+        rel = p.relative_to(WEBAUDIO)
+        parts = rel.parts                      # (<date>, <folder>, <name>.opus)
+        if len(parts) != 3:
+            continue
+        key = f"{parts[0]}/{parts[1]}"
+        m = meta.get(key)
+        if not m:
+            continue
+        mt = ts.search(parts[2])
+        if not mt:
+            continue
+        d, t = mt.group(1), mt.group(2)
+        dt = f"{d[:4]}-{d[4:6]}-{d[6:]} {t[:2]}:{t[2:4]}:{t[4:]}"
+        hour = int(t[:2])
+        rec = ("F" if m["habitat"] == "forest" else "P") + str(m["point"])
+        rows.append({
+            "deploy": m["deploy"], "date": dt[:10], "datetime": dt, "hour": hour,
+            "daynight": "day" if 6 <= hour < 18 else "night", "habitat": m["habitat"],
+            "spacing": int(m["spacing_m"]), "point": int(m["point"]), "recorder": rec,
+            "moth": m["audiomoth"], "url": f"{R2}/{parts[0]}/{parts[1]}/{parts[2]}",
+        })
+    rows.sort(key=lambda r: (r["datetime"], r["recorder"]))
+    (OUT / "audio_manifest.json").write_text(json.dumps(rows, separators=(",", ":")), encoding="utf-8")
+    print(f"audio manifest: {len(rows)} clips -> {OUT/'audio_manifest.json'}")
 
 
 if __name__ == "__main__":

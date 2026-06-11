@@ -1,6 +1,6 @@
 import type { IndexFile } from '../types'
 
-export type ViewMode = 'grid' | 'species'
+export type ViewMode = 'grid' | 'species' | 'recordings'
 export interface FilterState {
   day: string; spacing: string; group: string; search: string; habitat: string
   recorder: string; daynight: string; hourMin: number; conf: number; sort: string
@@ -31,11 +31,13 @@ export function Filters({
         </div>
 
         <Field label="View">
-          <Segmented value={f.view} onChange={(v) => set({ view: v as ViewMode })}
-            options={[['grid', 'Grid'], ['species', 'By species ⇆']]} />
+          <Segmented wrap value={f.view} onChange={(v) => set({ view: v as ViewMode })}
+            options={[['grid', 'Detections'], ['species', 'By species'], ['recordings', 'Recordings']]} />
           <p className="mt-1 text-[10px] leading-tight text-faint">
             {f.view === 'species'
               ? 'one row per species · top song first · slide right for more'
+              : f.view === 'recordings'
+              ? 'browse the raw recordings by site, time & habitat (not by detected species)'
               : 'every detection as its own card'}
           </p>
         </Field>

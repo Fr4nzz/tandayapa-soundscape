@@ -47,14 +47,19 @@ export function Player({ det }: { det: Detection }) {
       })
     )
 
+    const hasRegion = det.end > det.start   // recordings view passes start === end (full clip, no detection box)
     ws.on('decode', () => {
-      regions.addRegion({
-        start: det.start, end: det.end,
-        color: 'rgba(240,106,74,0.16)', drag: false, resize: false,
-      })
-      ws.setTime(Math.max(0, det.start - 0.15))
+      if (hasRegion) {
+        regions.addRegion({
+          start: det.start, end: det.end,
+          color: 'rgba(240,106,74,0.16)', drag: false, resize: false,
+        })
+        ws.setTime(Math.max(0, det.start - 0.15))
+        setInfo(`detection ${det.start.toFixed(1)}–${det.end.toFixed(1)} s · clip ${ws.getDuration().toFixed(0)} s`)
+      } else {
+        setInfo(`clip ${ws.getDuration().toFixed(0)} s`)
+      }
       setReady(true)
-      setInfo(`detection ${det.start.toFixed(1)}–${det.end.toFixed(1)} s · clip ${ws.getDuration().toFixed(0)} s`)
     })
     ws.on('timeupdate', (t) => {
       if (stopAt.current !== null && t >= stopAt.current) { ws.pause(); stopAt.current = null }
@@ -62,7 +67,7 @@ export function Player({ det }: { det: Detection }) {
     ws.on('play', () => { if (current && current !== ws) current.pause(); current = ws; setPlaying(true) })
     ws.on('pause', () => setPlaying(false))
     ws.on('finish', () => setPlaying(false))
-    ws.on('error', () => setInfo('could not load audio (is the server running?)'))
+    ws.on('error', () => setInfo('could not load audio'))
 
     return () => { if (current === ws) current = null; ws.destroy() }
   }, [det.audio, det.start, det.end])
@@ -80,14 +85,16 @@ export function Player({ det }: { det: Detection }) {
     <div className="border-t border-line bg-base/40">
       <div className="px-3 pt-3"><div ref={elRef} className={ready ? '' : 'opacity-40'} /></div>
       <div className="flex items-center gap-2 px-3 py-2.5">
-        <button
-          onClick={playDetection} disabled={!ready}
-          className={`rounded-md bg-moss/90 px-3 py-1.5 text-[13px] font-semibold text-base transition hover:bg-moss-bright disabled:opacity-40 ${playing ? 'recording' : ''}`}
-        >▶ Play detection</button>
+        {det.end > det.start && (
+          <button
+            onClick={playDetection} disabled={!ready}
+            className={`rounded-md bg-moss/90 px-3 py-1.5 text-[13px] font-semibold text-base transition hover:bg-moss-bright disabled:opacity-40 ${playing ? 'recording' : ''}`}
+          >▶ Play detection</button>
+        )}
         <button
           onClick={toggleFull} disabled={!ready}
-          className="rounded-md border border-line-2 px-3 py-1.5 text-[13px] text-ink/90 transition hover:bg-panel-2 disabled:opacity-40"
-        >{playing ? 'Pause' : 'Play full clip'}</button>
+          className={`rounded-md px-3 py-1.5 text-[13px] transition disabled:opacity-40 ${det.end > det.start ? 'border border-line-2 text-ink/90 hover:bg-panel-2' : `bg-moss/90 font-semibold text-base hover:bg-moss-bright ${playing ? 'recording' : ''}`}`}
+        >{playing ? 'Pause' : det.end > det.start ? 'Play full clip' : '▶ Play clip'}</button>
         <span className="ml-auto font-mono text-[11px] text-faint">{info}</span>
       </div>
     </div>

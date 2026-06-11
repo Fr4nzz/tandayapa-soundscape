@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { Detection, IndexFile } from './types'
+import type { Detection, IndexFile, Recording } from './types'
 import { Filters, DEFAULT_FILTERS, type FilterState } from './components/Filters'
 import { DetectionCard } from './components/DetectionCard'
+import { RecordingCard } from './components/RecordingCard'
 import { SpeciesRow, type SpeciesGroup } from './components/SpeciesRow'
 
 const DATA = `${import.meta.env.BASE_URL}data`   // detection JSON bundled with the app; audio streams from Cloudflare R2
@@ -10,6 +11,7 @@ const PAGE = 24        // detection cards per page (grid view)
 export default function App() {
   const [index, setIndex] = useState<IndexFile | null>(null)
   const [dets, setDets] = useState<Detection[]>([])
+  const [recs, setRecs] = useState<Recording[]>([])
   const [err, setErr] = useState<string | null>(null)
   const [f, setF] = useState<FilterState>(DEFAULT_FILTERS)
   const [page, setPage] = useState(0)
@@ -25,6 +27,10 @@ export default function App() {
             .then((arr) => arr.map((x) => ({ ...x, deploy: d.day }))))   // tag each detection with its deployment (day1..day6)
         )
         setDets(days.flat())
+        fetch(`${DATA}/audio_manifest.json${v}`)
+          .then((r) => (r.ok ? r.json() : []))
+          .then((m: Recording[]) => setRecs(m))
+          .catch(() => {})   // recordings view is optional
       })
       .catch((e) => setErr(String(e.message ?? e)))
   }, [])
@@ -71,11 +77,29 @@ export default function App() {
     return groups
   }, [filtered, f.view, f.sort])
 
+  // "By recording" view: browse the raw clips by site / time / habitat (audio_manifest.json)
+  const filteredRecs = useMemo(() => {
+    if (f.view !== 'recordings') return []
+    const out = recs.filter((r) =>
+      (f.day === 'all' || r.deploy === f.day) &&
+      (f.spacing === 'all' || String(r.spacing) === f.spacing) &&
+      (f.habitat === 'all' || r.habitat === f.habitat) &&
+      (f.recorder === 'all' || r.recorder === f.recorder) &&
+      (f.daynight === 'all' || r.daynight === f.daynight) &&
+      r.hour >= f.hourMin
+    )
+    out.sort((a, b) => f.sort === 'time-desc'
+      ? b.datetime.localeCompare(a.datetime) : a.datetime.localeCompare(b.datetime))
+    return out
+  }, [recs, f])
+
   const bySpecies = f.view === 'species'
-  const unitCount = bySpecies ? speciesGroups.length : filtered.length
-  // species view renders ALL species at once (no pagination); grid view stays paginated
-  const pages = bySpecies ? 1 : Math.max(1, Math.ceil(filtered.length / PAGE))
+  const byRecs = f.view === 'recordings'
+  const unitCount = byRecs ? filteredRecs.length : bySpecies ? speciesGroups.length : filtered.length
+  // species view renders all rows at once; grid + recordings views are paginated
+  const pages = bySpecies ? 1 : Math.max(1, Math.ceil((byRecs ? filteredRecs.length : filtered.length) / PAGE))
   const pageItems = filtered.slice(page * PAGE, page * PAGE + PAGE)
+  const pageRecs = filteredRecs.slice(page * PAGE, page * PAGE + PAGE)
   const pageGroups = speciesGroups
 
   return (
@@ -90,12 +114,18 @@ export default function App() {
 
       {index && (
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
-          <Filters index={index} f={f} set={set} total={dets.length} shown={filtered.length} />
+          <Filters index={index} f={f} set={set}
+            total={byRecs ? recs.length : dets.length}
+            shown={byRecs ? filteredRecs.length : filtered.length} />
 
           <main>
             {unitCount === 0 ? (
               <div className="grid place-items-center rounded-xl border border-line bg-panel/50 py-24 font-mono text-muted">
-                No detections match these filters.
+                {byRecs ? 'No recordings match these filters.' : 'No detections match these filters.'}
+              </div>
+            ) : byRecs ? (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
+                {pageRecs.map((r, i) => <RecordingCard key={r.url} rec={r} idx={i} />)}
               </div>
             ) : bySpecies ? (
               <div className="flex flex-col gap-4">

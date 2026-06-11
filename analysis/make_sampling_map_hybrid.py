@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import xml.etree.ElementTree as ET
+
 import contextily as cx
 import matplotlib
 matplotlib.use("Agg")
@@ -21,9 +23,10 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
 GPS = ROOT / "data" / "raw" / "gps" / "tandayapa_gps_waypoints.csv"
+TRAIL = ROOT / "data" / "raw" / "gps" / "tandayapa-audiomoths-experiment.gpx"
 OUT = ROOT / "outputs" / "analysis" / "sampling_gps_points.png"
 R = 6378137.0
-COLS = {"forest": "#39B54A", "pasture": "#F2C14E"}
+COLS = {"forest": "#39B54A", "pasture": "#F2C14E", "trail": "#E74C3C"}
 
 
 def merc(lon, lat):
@@ -32,6 +35,22 @@ def merc(lon, lat):
     x = R * np.radians(lon)
     y = R * np.log(np.tan(np.pi / 4 + np.radians(lat) / 2))
     return x, y
+
+
+def parse_gpx_trail(path):
+    """Extract lat/lon points from a GPX track."""
+    tree = ET.parse(path)
+    root = tree.getroot()
+    # Handle namespace
+    ns = {"gpx": "http://www.topografix.com/GPX/1/1"}
+    lats, lons = [], []
+    for trkpt in root.findall(".//gpx:trkpt", ns):
+        lat = trkpt.get("lat")
+        lon = trkpt.get("lon")
+        if lat and lon:
+            lats.append(float(lat))
+            lons.append(float(lon))
+    return lons, lats
 
 
 def main() -> None:
@@ -86,6 +105,12 @@ def main() -> None:
     ax.set_xlim(plot["x"].min() - pad, plot["x"].max() + pad)
     ax.set_ylim(plot["y"].min() - pad, plot["y"].max() + pad)
     cx.add_basemap(ax, source=cx.providers.Esri.WorldImagery, zoom=18, attribution=False)
+
+    # Draw trail from GPX
+    if TRAIL.exists():
+        trail_lons, trail_lats = parse_gpx_trail(TRAIL)
+        trail_x, trail_y = merc(trail_lons, trail_lats)
+        ax.plot(trail_x, trail_y, "-", color=COLS["trail"], lw=2.5, alpha=.85, zorder=4, label="Trail from Tandayapa Station")
 
     # scale and north
     x0, x1 = ax.get_xlim(); y0, y1 = ax.get_ylim()

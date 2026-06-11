@@ -109,12 +109,14 @@ apart), the realised distances are 15, 30, 60 and 120 m; we **analyse pairs up t
 single 120 m pair, which existed in pasture only, on one line, with no replicate (forest lost its 60 m
 point-1 recorder). This keeps the forest–pasture comparison on the same 15–60 m range.
 
-```{r design-table}
-det %>% distinct(deploy, date, habitat, spacing_m, point_num) %>%
+```{r design-table, include=FALSE}
+# Table 1 is now presented as text below
+deploy_summary <- det %>% distinct(deploy, date, habitat, spacing_m, point_num) %>%
   count(date, spacing_m, habitat, name = "recorders") %>%
-  pivot_wider(names_from = habitat, values_from = recorders, values_fill = 0) %>%
-  arrange(date) %>% pub_tab("Table 1. Deployments and working recorders per habitat.")
+  arrange(date)
 ```
+
+Six deployment days were used (2–7 June 2026), with two days per spacing (15 m, 30 m, 60 m). Each day placed three recorders per habitat (forest and pasture), giving 6 recorders per day when all units worked. Recorders were swapped between positions across days to reduce equipment bias. Day 1 (2 June) used 15 m spacing with 2 forest and 3 pasture recorders; day 2 (3 June) used 30 m with 3 forest and 3 pasture; day 3 (4 June) used 60 m with 2 forest and 3 pasture; day 4 (5 June) used 15 m with 3 forest and 3 pasture; day 5 (6 June) used 30 m with 3 forest and 3 pasture; and day 6 (7 June) used 60 m with 2 forest and 3 pasture.
 
 # Data collection
 
@@ -231,7 +233,11 @@ tibble(Model = c("Additive (Distance + Habitat)", "Interactive (Distance × Habi
        AIC = round(c(AIC(mod_add), AIC(mod_int)), 1),
        BIC = round(c(BIC(mod_add), BIC(mod_int)), 1),
        `Preferred?` = ifelse(c(AIC(mod_add), AIC(mod_int)) == min(c(AIC(mod_add), AIC(mod_int))), "yes", "no")) %>%
-  pub_tab("Table 1b. Model comparison: additive vs interactive distance model for combined acoustic dissimilarity (≤60 m). Lower AIC/BIC = better fit.")
+  pub_tab("Table 1b. Model comparison: additive vs interactive distance model for combined acoustic dissimilarity (≤60 m). Lower AIC/BIC = better fit. The interactive model is preferred because it tests whether the distance slope differs between habitats (H2), which is the central ecological question.")
+```
+
+The interactive model is chosen because it directly tests whether distance and habitat interact — that is, whether the distance slope differs between forest and pasture (H2). The additive model assumes the same distance slope in both habitats, which would miss the ecological contrast we are looking for. The raw indices are used in the time-of-day model (Table 3), where each recorder contributes its own value; the pairwise difference is only needed for the distance-decay question.
+
 ```
 
 # Results
@@ -388,20 +394,33 @@ and birds (Figure 4); this is not evidence of higher biodiversity (richness is s
 reflects more calling in the open and sound carrying farther where there is less vegetation to absorb
 it, so it is not a reason to place recorders only in open areas.
 
-```{r richness-fig, fig.width=9, fig.height=3.4, fig.cap="Figure 4. (A) Species richness and (B) vocal activity (detections) by habitat and group (confidence ≥ 0.5)."}
+```{r richness-tab, echo=FALSE}
+# Text summary of richness and activity (presented as text per reviewer comment)
 dets <- det %>% filter(!species %in% excluded_frogs, confidence >= CONF_MIN)
-bind_rows(
-  dets %>% group_by(habitat, group) %>% summarise(value=n_distinct(species), .groups="drop") %>% mutate(panel="A. Species richness"),
-  dets %>% count(habitat, group, name="value") %>% mutate(panel="B. Vocal activity (detections)")) %>%
-  ggplot(aes(group, value, fill=habitat)) +
-  geom_col(position=position_dodge(.8), width=.7)+scale_fill_manual(values=cols)+
-  facet_wrap(~panel, scales="free_y")+labs(x=NULL, y=NULL)+theme_minimal()
+richness <- dets %>% group_by(habitat, group) %>% summarise(richness=n_distinct(species), .groups="drop")
+activity <- dets %>% count(habitat, group, name="detections")
+combined <- left_join(richness, activity, by=c("habitat","group"))
+combined %>% mutate(across(where(is.numeric), ~round(., 1))) %>%
+  mutate(habitat=str_to_title(habitat), group=str_to_title(group)) %>%
+  rename(Habitat=habitat, Group=group, `Species richness`=richness, Detections=detections) %>%
+  pub_tab("Table 5. Species richness and vocal activity (detections) by habitat and group.")
 ```
 
 The paired dataloggers show the **forest buffers the microclimate**: at midday the pasture warms to
 ~22 °C and its humidity falls to ~81%, while the forest stays ~19.6 °C and ~97% humidity, and the
 forest is near 100% humidity 84% of the time versus 52% in the pasture. This is consistent with the
 closed forest canopy moderating extremes, and with the more homogeneous forest soundscape.
+
+```{r micro-tab, echo=FALSE}
+# Text summary of microclimate (presented as text per reviewer comment)
+clim %>% group_by(habitat) %>%
+  summarise(`Mean temp (°C)`=round(mean(temp_c),1), `Max temp (°C)`=round(max(temp_c),1),
+            `Mean RH (%)`=round(mean(rh_pct),1), `Min RH (%)`=round(min(rh_pct),1),
+            `Hours >95% RH`=sum(rh_pct > 95), .groups="drop") %>%
+  mutate(habitat=str_to_title(habitat)) %>%
+  rename(Habitat=habitat) %>%
+  pub_tab("Table 6. Microclimate summary by habitat (Kestrel loggers, June 3–7).")
+```
 
 ```{r micro-fig, fig.width=9, fig.height=3.3, fig.cap="Figure 5. Mean temperature and humidity by hour, forest vs pasture (loggers, June 3–7)."}
 clim %>% pivot_longer(c(temp_c, rh_pct), names_to="var", values_to="value") %>%

@@ -22,7 +22,7 @@ import contextily as cx
 
 ROOT = Path(__file__).resolve().parent.parent
 GPS = ROOT / "data" / "raw" / "gps" / "tandayapa_gps_waypoints.csv"
-OUT = ROOT / "outputs" / "analysis" / "sampling_map.png"
+OUT = ROOT / "outputs" / "analysis" / "sampling_gps_points.png"
 COLS = {"forest": "#39B54A", "pasture": "#F2C14E"}
 R = 6378137.0
 

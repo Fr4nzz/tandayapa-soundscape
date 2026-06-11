@@ -25,6 +25,8 @@ CONFIG.TXT
 # Keep ONLY the static-gallery template (source); ignore everything else.
 /outputs/*
 !/outputs/gallery_site_template/
+!/outputs/analysis/
+!/outputs/analysis/sampling_gps_points.png
 
 # --- Web app build + deps (run `npm install` / `npm run build`) ---------------
 /webapp/node_modules/

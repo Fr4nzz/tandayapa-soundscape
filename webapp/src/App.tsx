@@ -21,7 +21,8 @@ export default function App() {
       .then(async (ix: IndexFile) => {
         setIndex(ix)
         const days = await Promise.all(
-          ix.days.map((d) => fetch(`${DATA}/${d.day}.json${v}`).then((r) => r.json() as Promise<Detection[]>))
+          ix.days.map((d) => fetch(`${DATA}/${d.day}.json${v}`).then((r) => r.json() as Promise<Detection[]>)
+            .then((arr) => arr.map((x) => ({ ...x, deploy: d.day }))))   // tag each detection with its deployment (day1..day6)
         )
         setDets(days.flat())
       })
@@ -34,7 +35,8 @@ export default function App() {
     const q = f.search.trim().toLowerCase()
     let out = dets.filter((d) =>
       d.conf >= f.conf &&
-      (f.day === 'all' || d.day === f.day) &&
+      (f.day === 'all' || d.deploy === f.day) &&
+      (f.spacing === 'all' || String(d.spacing) === f.spacing) &&
       (f.group === 'all' || d.group === f.group) &&
       (f.habitat === 'all' || d.habitat === f.habitat) &&
       (f.recorder === 'all' || d.recorder === f.recorder) &&

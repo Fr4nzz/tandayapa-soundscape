@@ -2,7 +2,8 @@ export type Group = 'bird' | 'frog' | 'insect'
 
 export interface Detection {
   id: string
-  day: string
+  day: string          // calendar date of the detection, e.g. "2026-06-02"
+  deploy?: string      // deployment block (day1..day6), tagged on load
   group: Group
   audio: string        // server-root path to the original WAV, e.g. "/F1501_A05/xxx.WAV"
   start: number        // detection start (s) within the clip

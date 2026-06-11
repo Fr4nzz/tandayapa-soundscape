@@ -2,12 +2,12 @@ import type { IndexFile } from '../types'
 
 export type ViewMode = 'grid' | 'species'
 export interface FilterState {
-  day: string; group: string; search: string; habitat: string
+  day: string; spacing: string; group: string; search: string; habitat: string
   recorder: string; daynight: string; hourMin: number; conf: number; sort: string
   view: ViewMode
 }
 export const DEFAULT_FILTERS: FilterState = {
-  day: 'all', group: 'all', search: '', habitat: 'all',
+  day: 'all', spacing: 'all', group: 'all', search: '', habitat: 'all',
   recorder: 'all', daynight: 'all', hourMin: 0, conf: 0.25, sort: 'conf-desc',
   view: 'grid',
 }
@@ -18,7 +18,8 @@ export function Filters({
   index: IndexFile; f: FilterState; set: (p: Partial<FilterState>) => void
   total: number; shown: number
 }) {
-  const days = index.days.map((d) => d.day)
+  const dayOpts = index.days.map((d) => [d.day, `${d.window[0].slice(5, 10)} · ${d.spacing}m`] as [string, string])
+  const spacings = [...new Set(index.days.map((d) => d.spacing))].sort((a, b) => a - b)
   return (
     <aside className="flex flex-col gap-5 lg:sticky lg:top-[84px] lg:h-fit">
       <div className="rounded-xl border border-line bg-panel/70 p-4 backdrop-blur-sm">
@@ -45,8 +46,13 @@ export function Filters({
         </Field>
 
         <Field label="Day">
-          <Segmented value={f.day} onChange={(v) => set({ day: v })}
-            options={[['all', 'All'], ...days.map((d) => [d, d] as [string, string])]} />
+          <Segmented wrap value={f.day} onChange={(v) => set({ day: v })}
+            options={[['all', 'All'], ...dayOpts]} />
+        </Field>
+
+        <Field label="Spacing">
+          <Segmented value={f.spacing} onChange={(v) => set({ spacing: v })}
+            options={[['all', 'All'], ...spacings.map((s) => [String(s), `${s} m`] as [string, string])]} />
         </Field>
 
         <Field label="Search species">

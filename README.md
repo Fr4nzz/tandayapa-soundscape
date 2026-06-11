@@ -14,13 +14,17 @@ detect this spatial structure — so a biodiversity question about spacing needs
 indices alone. The indices *do* cleanly capture the **dawn/day chorus** (BI) and the **forest's
 buffered microclimate** (cooler, far more humid than the exposed pasture).
 
-## View the report (no install needed)
+## 🌐 Live site (GitHub Pages — no install needed)
 
-**▶ Open it in your browser (GitHub Pages):**
-**https://fr4nzz.github.io/tandayapa-soundscape/reports/tandayapa_spacing_biodiversity_report.html**
+**▶ https://fr4nzz.github.io/tandayapa-soundscape/**
 
-(Or open `reports/tandayapa_spacing_biodiversity_report.html` in the repo and click
-**"Download raw file"**.)
+| Page | Link |
+|---|---|
+| 🏠 **Home** | <https://fr4nzz.github.io/tandayapa-soundscape/> |
+| 📄 **Report** (methods, results & figures) | <https://fr4nzz.github.io/tandayapa-soundscape/reports/tandayapa_spacing_biodiversity_report.html> |
+| 🎧 **Detection explorer** (browse & verify detections / recordings by ear + spectrogram) | <https://fr4nzz.github.io/tandayapa-soundscape/app/> |
+
+The web app streams audio (Opus) from Cloudflare R2, so it works in any browser with nothing to host.
 
 ## Reproduce the analysis in RStudio
 

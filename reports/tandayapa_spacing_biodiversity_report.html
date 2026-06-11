@@ -1503,7 +1503,7 @@ Tandayapa Cloud Forest Station, Ecuador · AudioMoth passive acoustic
 monitoring</h3>
 <h4 class="author">Franz Chandi, Maria Andrade, Priscila Cajas, Noemi
 Castro</h4>
-<h4 class="date">10 junio 2026</h4>
+<h4 class="date">11 junio 2026</h4>
 
 </div>
 
@@ -1713,6 +1713,14 @@ use one value per recorder pair so the pair-level distance is tested
 cleanly:</p>
 <p><span class="math display">\[\text{Difference} \sim \text{Distance}
 \times \text{Habitat} + (1 \mid \text{day})\]</span></p>
+<p><strong>Why the difference?</strong> Distance is a property of a
+<em>pair</em> of recorders, not of a single recorder. A recorder at 15 m
+has no distance on its own; distance only exists when you compare two
+recorders. Therefore, a distance-decay model must use the pairwise
+difference between the two recordings, just as a Bray–Curtis or Jaccard
+dissimilarity is also computed pairwise. The raw indices <em>are</em>
+used, but in the complementary model that asks how the absolute level of
+each index changes with time of day and habitat, not with distance.</p>
 <p>For <strong>time of day</strong>, we compute the difference per pair
 within each period (dawn, day, dusk, night) and add the pair as a random
 effect, which is what makes time of day estimable within pairs:</p>
@@ -1772,6 +1780,54 @@ tod_tab &lt;- function(m){
            `CI excl 0`=ifelse(lo&gt;0|hi&lt;0,&quot;yes&quot;,&quot;no&quot;))
   })
 }</code></pre>
+<pre class="r"><code># Compare additive vs interactive distance model for combined acoustic dissimilarity
+ip &lt;- list()
+for (g in split(idx, list(idx$deploy, idx$habitat), drop=TRUE)) {
+  if (nrow(g) &lt; 2) next
+  cb &lt;- combn(seq_len(nrow(g)), 2)
+  for (k in seq_len(ncol(cb))) { a &lt;- g[cb[1,k],]; b &lt;- g[cb[2,k],]
+    ip[[length(ip)+1]] &lt;- tibble(deploy=a$deploy, habitat=a$habitat,
+      distance_m=a$spacing*abs(a$point-b$point),
+      dACI=abs(a$ACI-b$ACI), dBI=abs(a$BI-b$BI), dADI=abs(a$ADI-b$ADI)) }
+}
+ipw &lt;- bind_rows(ip) %&gt;% filter(distance_m &lt;= MAXDIST)
+# z-score each index, then average into a combined dissimilarity
+ipw &lt;- ipw %&gt;% mutate(zACI = scale(dACI)[,1], zBI = scale(dBI)[,1], zADI = scale(dADI)[,1],
+                      combined_dissim = (zACI + zBI + zADI)/3)
+mod_add &lt;- suppressWarnings(lmer(combined_dissim ~ distance_m + habitat + (1|deploy), data=ipw, REML=FALSE))
+mod_int &lt;- suppressWarnings(lmer(combined_dissim ~ distance_m * habitat + (1|deploy), data=ipw, REML=FALSE))
+tibble(Model = c(&quot;Additive (Distance + Habitat)&quot;, &quot;Interactive (Distance × Habitat)&quot;),
+       AIC = round(c(AIC(mod_add), AIC(mod_int)), 1),
+       BIC = round(c(BIC(mod_add), BIC(mod_int)), 1),
+       `Preferred?` = ifelse(c(AIC(mod_add), AIC(mod_int)) == min(c(AIC(mod_add), AIC(mod_int))), &quot;yes&quot;, &quot;no&quot;)) %&gt;%
+  pub_tab(&quot;Table 1b. Model comparison: additive vs interactive distance model for combined acoustic dissimilarity (≤60 m). Lower AIC/BIC = better fit.&quot;)</code></pre>
+<table>
+<caption>Table 1b. Model comparison: additive vs interactive distance
+model for combined acoustic dissimilarity (≤60 m). Lower AIC/BIC =
+better fit.</caption>
+<thead>
+<tr class="header">
+<th align="left">Model</th>
+<th align="right">AIC</th>
+<th align="right">BIC</th>
+<th align="left">Preferred?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Additive (Distance + Habitat)</td>
+<td align="right">54.2</td>
+<td align="right">59.7</td>
+<td align="left">yes</td>
+</tr>
+<tr class="even">
+<td align="left">Interactive (Distance × Habitat)</td>
+<td align="right">55.9</td>
+<td align="right">62.5</td>
+<td align="left">no</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="results" class="section level1" number="6">
 <h1><span class="header-section-number">6</span> Results</h1>

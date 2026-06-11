@@ -146,6 +146,8 @@ pair-level distance is tested cleanly:
 
 $$\text{Difference} \sim \text{Distance} \times \text{Habitat} + (1 \mid \text{day})$$
 
+**Why the difference?** Distance is a property of a *pair* of recorders, not of a single recorder. A recorder at 15 m has no distance on its own; distance only exists when you compare two recorders. Therefore, a distance-decay model must use the pairwise difference between the two recordings, just as a Bray–Curtis or Jaccard dissimilarity is also computed pairwise. The raw indices *are* used, but in the complementary model that asks how the absolute level of each index changes with time of day and habitat, not with distance.
+
 For **time of day**, we compute the difference per pair within each period (dawn, day, dusk, night) and
 add the pair as a random effect, which is what makes time of day estimable within pairs:
 
@@ -206,6 +208,30 @@ tod_tab <- function(m){
            `CI excl 0`=ifelse(lo>0|hi<0,"yes","no"))
   })
 }
+```
+
+```{r aic-table}
+# Compare additive vs interactive distance model for combined acoustic dissimilarity
+ip <- list()
+for (g in split(idx, list(idx$deploy, idx$habitat), drop=TRUE)) {
+  if (nrow(g) < 2) next
+  cb <- combn(seq_len(nrow(g)), 2)
+  for (k in seq_len(ncol(cb))) { a <- g[cb[1,k],]; b <- g[cb[2,k],]
+    ip[[length(ip)+1]] <- tibble(deploy=a$deploy, habitat=a$habitat,
+      distance_m=a$spacing*abs(a$point-b$point),
+      dACI=abs(a$ACI-b$ACI), dBI=abs(a$BI-b$BI), dADI=abs(a$ADI-b$ADI)) }
+}
+ipw <- bind_rows(ip) %>% filter(distance_m <= MAXDIST)
+# z-score each index, then average into a combined dissimilarity
+ipw <- ipw %>% mutate(zACI = scale(dACI)[,1], zBI = scale(dBI)[,1], zADI = scale(dADI)[,1],
+                      combined_dissim = (zACI + zBI + zADI)/3)
+mod_add <- suppressWarnings(lmer(combined_dissim ~ distance_m + habitat + (1|deploy), data=ipw, REML=FALSE))
+mod_int <- suppressWarnings(lmer(combined_dissim ~ distance_m * habitat + (1|deploy), data=ipw, REML=FALSE))
+tibble(Model = c("Additive (Distance + Habitat)", "Interactive (Distance × Habitat)"),
+       AIC = round(c(AIC(mod_add), AIC(mod_int)), 1),
+       BIC = round(c(BIC(mod_add), BIC(mod_int)), 1),
+       `Preferred?` = ifelse(c(AIC(mod_add), AIC(mod_int)) == min(c(AIC(mod_add), AIC(mod_int))), "yes", "no")) %>%
+  pub_tab("Table 1b. Model comparison: additive vs interactive distance model for combined acoustic dissimilarity (≤60 m). Lower AIC/BIC = better fit.")
 ```
 
 # Results

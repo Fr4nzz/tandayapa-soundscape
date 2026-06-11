@@ -97,6 +97,8 @@ vegetation with closed to semi-closed canopy, epiphytes, ferns and understory, w
 scatters sound) and **pasture** (open, dominated by non-native grasses with scattered unidentified
 shrubs, more exposed to wind and environmental noise).
 
+![Figure 1. Sampling design showing forest and pasture transects with recorder positions (GPS coordinates) and distances from the forest edge. Forest points are raw GPS coordinates; pasture points are corrected to the design positions (0, 15, 30, 60, 120 m from the edge).](../outputs/analysis/sampling_gps_points.png)
+
 # Experimental design
 
 We deployed AudioMoth recorders on short linear transects **20 m inside the edge** of each habitat, at
@@ -243,7 +245,7 @@ The interactive model is chosen because it directly tests whether distance and h
 ## Acoustic indices and recorder distance
 
 For every within-habitat recorder pair we took the absolute difference in each index and asked whether
-it grows with distance. In **Figure 1** the lines are the mixed-model fits with 95% bands; points are
+it grows with distance. In **Figure 2** the lines are the mixed-model fits with 95% bands; points are
 adjusted for the day random effect, and the symbol marks the first or second replicate day.
 
 We estimated the effect of recorder distance on each acoustic index difference using linear mixed models
@@ -270,7 +272,7 @@ for (g in split(idx, list(idx$deploy, idx$habitat), drop=TRUE)) {
 ipw <- bind_rows(ip) %>% filter(distance_m <= MAXDIST)
 ```
 
-```{r index-fig, fig.width=9, fig.height=3.6, fig.cap="Figure 1. Difference in each acoustic index (ACI, BI, ADI) between two recorders vs distance, forest vs pasture (≤60 m). Mixed-model fit + 95% band; points day-adjusted, shape = replicate day."}
+```{r index-fig, fig.width=9, fig.height=3.6, fig.cap="Figure 2. Difference in each acoustic index (ACI, BI, ADI) between two recorders vs distance, forest vs pasture (≤60 m). Mixed-model fit + 95% band; points day-adjusted, shape = replicate day."}
 relab <- c(dACI="ACI", dBI="BI", dADI="ADI"); P <- list(); L <- list()
 for (r in c("dACI","dBI","dADI")) for (h in c("forest","pasture")){
   s <- filter(ipw, habitat==h)
@@ -301,11 +303,11 @@ map_dfr(c("dACI","dBI","dADI"), function(r) mm_hab(ipw, r) %>% mutate(index=r, .
 
 ## Acoustic indices and time of day
 
-The indices do, however, change strongly through the day. **Figure 2** shows each index by period:
+The indices do, however, change strongly through the day. **Figure 3** shows each index by period:
 **BI** (the biological 2–8 kHz band) peaks at **dawn and day** (the chorus) and is lowest at night;
 **ADI** dips at midday; **ACI** varies little; and pasture reads louder than forest through the day.
 
-```{r diel-fig, fig.width=9, fig.height=3.3, fig.cap="Figure 2. Acoustic indices by time of day, forest vs pasture (mean ± 95% CI). BI peaks at the dawn/day chorus; ADI dips at midday."}
+```{r diel-fig, fig.width=9, fig.height=3.3, fig.cap="Figure 3. Acoustic indices by time of day, forest vs pasture (mean ± 95% CI). BI peaks at the dawn/day chorus; ADI dips at midday."}
 idxd$diel <- factor(idxd$diel, levels=c("night","dawn","day","dusk"))
 idxd %>% pivot_longer(c(ACI,BI,ADI), names_to="index", values_to="value") %>%
   mutate(index=factor(index,c("ACI","BI","ADI"))) %>%
@@ -384,7 +386,7 @@ build_comm_pw <- function(cmin){
 pw <- build_comm_pw(CONF_MIN)
 ```
 
-```{r comm-fig, fig.cap="Figure 3. Species turnover (Jaccard) between two recorders vs distance, forest vs pasture (≤60 m). Mixed-model fit + 95% band; points day-adjusted, shape = replicate day."}
+```{r comm-fig, fig.cap="Figure 4. Species turnover (Jaccard) between two recorders vs distance, forest vs pasture (≤60 m). Mixed-model fit + 95% band; points day-adjusted, shape = replicate day."}
 mm_decay_plot(pw, "jacc", "Jaccard dissimilarity (day-adjusted)")
 ```
 
@@ -405,7 +407,7 @@ positive), echoing the indices: sites diverge most when the community is active.
 Detected richness is **nearly identical** between habitats (forest and pasture hold similar numbers of
 bird, frog and insect species), so the spacing contrast is about *spatial structure*, not species
 count. Pasture recorders logged **more detections** (vocal activity) than forest ones, especially frogs
-and birds (Figure 4); this is not evidence of higher biodiversity (richness is similar) but likely
+and birds (Figure 5); this is not evidence of higher biodiversity (richness is similar) but likely
 reflects more calling in the open and sound carrying farther where there is less vegetation to absorb
 it, so it is not a reason to place recorders only in open areas.
 
@@ -437,7 +439,7 @@ clim %>% group_by(habitat) %>%
   pub_tab("Table 6. Microclimate summary by habitat (Kestrel loggers, June 3–7).")
 ```
 
-```{r micro-fig, fig.width=9, fig.height=3.3, fig.cap="Figure 5. Mean temperature and humidity by hour, forest vs pasture (loggers, June 3–7)."}
+```{r micro-fig, fig.width=9, fig.height=3.3, fig.cap="Figure 6. Mean temperature and humidity by hour, forest vs pasture (loggers, June 3–7)."}
 clim %>% pivot_longer(c(temp_c, rh_pct), names_to="var", values_to="value") %>%
   mutate(var=recode(var, temp_c="Temperature (°C)", rh_pct="Relative humidity (%)")) %>%
   group_by(var, habitat, hour) %>% summarise(mean=mean(value), .groups="drop") %>%
@@ -447,21 +449,21 @@ clim %>% pivot_longer(c(temp_c, rh_pct), names_to="var", values_to="value") %>%
 
 # Discussion
 
-Over 15–60 m, the **acoustic indices did not change with recorder distance** (Figure 1, Table 2): two
+Over 15–60 m, the **acoustic indices did not change with recorder distance** (Figure 2, Table 2): two
 recorders 15 m or 60 m apart produced equally similar ACI, BI and ADI. The cheap indices therefore did
 not, on their own, reveal a spacing effect at this scale, and **H1 was not supported for the indices**.
-The indices instead tracked **time of day** strongly (Figure 2): BI rose at the dawn/day chorus and
+The indices instead tracked **time of day** strongly (Figure 3): BI rose at the dawn/day chorus and
 between-site BI differences were largest during the active periods (Table 3), supporting **H3**. This
 makes sense, indices summarise the overall amount and spread of sound, which changes far more between
 night and a dawn chorus than between two recorders a few tens of metres apart.
 
 The **species community told a different and complementary story**. Where the indices were flat, the
-BirdNET community showed a clear, threshold-robust **distance-decay in the pasture** (Figure 3,
+BirdNET community showed a clear, threshold-robust **distance-decay in the pasture** (Figure 4,
 Table 4): open-habitat recorders sampled increasingly different species with distance, while forest was
 weak and unresolved. This is the **opposite of H2** (we expected forest to decay faster because it
 attenuates sound); a plausible reading is that the pasture is more spatially heterogeneous at this scale
 (patchy edges, scattered shrubs, localised callers), while the forest interior, which the microclimate
-data show is the more buffered, homogeneous habitat (Figure 5), is acoustically more uniform. The key
+data show is the more buffered, homogeneous habitat (Figure 6), is acoustically more uniform. The key
 methodological message is that **a biodiversity question about recorder spacing needs species-level
 data**, because the indices alone would have concluded that spacing does not matter, missing the
 compositional turnover that the classifier-based analysis reveals. Both currencies agreed, though, that

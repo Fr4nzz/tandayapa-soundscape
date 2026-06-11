@@ -117,7 +117,7 @@ def main() -> None:
 
     # Big point at study area center
     ax_left.scatter([center_x], [center_y], s=200, color=COLS["study_area"], edgecolor="white", lw=2, zorder=6)
-    ax_left.annotate("Study area", (center_x, center_y), xytext=(18, 18), textcoords="offset points",
+    ax_left.annotate("Study area", (center_x, center_y), xytext=(18, 45), textcoords="offset points",
                 ha="center", va="center", fontsize=16, fontweight="bold", color="white",
                 arrowprops=dict(arrowstyle="-", color="white", lw=.6, alpha=.65),
                 bbox=dict(boxstyle="round,pad=0.2", fc=COLS["study_area"], ec="white", alpha=.9), zorder=7)

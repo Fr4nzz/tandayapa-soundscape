@@ -1,12 +1,14 @@
 import { useState } from 'react'
-import type { Detection } from '../types'
+import type { Detection, ReferenceCall } from '../types'
 import { confColor, fmtClock, fmtDate } from '../lib/util'
 import { Player } from './Player'
+import { ReferenceCalls } from './ReferenceCalls'
 
 const groupIcon: Record<string, string> = { bird: '🐦', frog: '🐸', insect: '🦗' }
 
-export function DetectionCard({ det, idx }: { det: Detection; idx: number }) {
+export function DetectionCard({ det, idx, refs }: { det: Detection; idx: number; refs?: ReferenceCall[] }) {
   const [open, setOpen] = useState(false)
+  const [refOpen, setRefOpen] = useState(false)
   const c = confColor(det.conf)
 
   return (
@@ -47,6 +49,15 @@ export function DetectionCard({ det, idx }: { det: Detection; idx: number }) {
           onClick={() => setOpen(true)}
           className="w-full border-t border-line bg-panel-2/60 py-2.5 text-[13px] font-semibold text-moss transition hover:bg-panel-2"
         >▶ Load spectrogram &amp; audio</button>
+      )}
+
+      {refOpen ? (
+        <ReferenceCalls species={det.species} group={det.group} refs={refs} />
+      ) : (
+        <button
+          onClick={() => setRefOpen(true)}
+          className="w-full border-t border-line bg-base/30 py-2 text-[12px] font-medium text-muted transition hover:bg-panel-2 hover:text-moss"
+        >🔊 Reference calls (compare ID)</button>
       )}
     </article>
   )

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { Detection, IndexFile, Recording } from './types'
+import type { Detection, IndexFile, Recording, ReferenceCall } from './types'
 import { Filters, DEFAULT_FILTERS, type FilterState } from './components/Filters'
 import { DetectionCard } from './components/DetectionCard'
 import { RecordingCard } from './components/RecordingCard'
@@ -12,6 +12,7 @@ export default function App() {
   const [index, setIndex] = useState<IndexFile | null>(null)
   const [dets, setDets] = useState<Detection[]>([])
   const [recs, setRecs] = useState<Recording[]>([])
+  const [refMap, setRefMap] = useState<Record<string, ReferenceCall[]>>({})
   const [err, setErr] = useState<string | null>(null)
   const [f, setF] = useState<FilterState>(DEFAULT_FILTERS)
   const [page, setPage] = useState(0)
@@ -31,6 +32,10 @@ export default function App() {
           .then((r) => (r.ok ? r.json() : []))
           .then((m: Recording[]) => setRecs(m))
           .catch(() => {})   // recordings view is optional
+        fetch(`${DATA}/reference_calls.json${v}`)
+          .then((r) => (r.ok ? r.json() : {}))
+          .then((m: Record<string, ReferenceCall[]>) => setRefMap(m))
+          .catch(() => {})   // reference calls are optional
       })
       .catch((e) => setErr(String(e.message ?? e)))
   }, [])
@@ -133,7 +138,7 @@ export default function App() {
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
-                {pageItems.map((d, i) => <DetectionCard key={d.id} det={d} idx={i} />)}
+                {pageItems.map((d, i) => <DetectionCard key={d.id} det={d} idx={i} refs={refMap[d.species]} />)}
               </div>
             )}
             <Pager page={page} pages={pages} onPage={setPage} />

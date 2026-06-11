@@ -20,6 +20,15 @@ export interface Detection {
   spacing: number      // recorder spacing for the day (m)
 }
 
+export interface ReferenceCall {
+  url: string          // playable audio URL (iNaturalist)
+  source: string       // "iNaturalist"
+  obs_url: string      // observation page
+  by: string           // recordist
+  place: string
+  license: string
+}
+
 export interface Recording {
   deploy: string       // day1..day6
   date: string         // "YYYY-MM-DD"

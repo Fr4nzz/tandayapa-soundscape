@@ -134,7 +134,7 @@ export default function App() {
               </div>
             ) : bySpecies ? (
               <div className="flex flex-col gap-4">
-                {pageGroups.map((sp) => <SpeciesRow key={sp.species} sp={sp} />)}
+                {pageGroups.map((sp) => <SpeciesRow key={sp.species} sp={sp} refs={refMap[sp.species]} />)}
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">

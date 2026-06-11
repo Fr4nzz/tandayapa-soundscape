@@ -1,7 +1,8 @@
-import { useRef } from 'react'
-import type { Detection } from '../types'
+import { useRef, useState } from 'react'
+import type { Detection, ReferenceCall } from '../types'
 import { confColor } from '../lib/util'
 import { DetectionCard } from './DetectionCard'
+import { ReferenceCalls } from './ReferenceCalls'
 
 const CAP = 40
 const groupIcon: Record<string, string> = { bird: '🐦', frog: '🐸', insect: '🦗' }
@@ -13,8 +14,9 @@ export interface SpeciesGroup {
   items: Detection[] // sorted by confidence desc
 }
 
-export function SpeciesRow({ sp }: { sp: SpeciesGroup }) {
+export function SpeciesRow({ sp, refs }: { sp: SpeciesGroup; refs?: ReferenceCall[] }) {
   const track = useRef<HTMLDivElement>(null)
+  const [refOpen, setRefOpen] = useState(false)
   const scroll = (dir: number) =>
     track.current?.scrollBy({ left: dir * track.current.clientWidth * 0.85, behavior: 'smooth' })
   const top = sp.items[0]
@@ -34,6 +36,10 @@ export function SpeciesRow({ sp }: { sp: SpeciesGroup }) {
         <span className="whitespace-nowrap font-mono text-[11px] text-faint">
           {sp.items.length} clip{sp.items.length > 1 ? 's' : ''}
         </span>
+        <button onClick={() => setRefOpen((o) => !o)}
+          className={`whitespace-nowrap rounded-md border px-2 py-0.5 font-mono text-[11px] transition ${refOpen ? 'border-moss bg-moss/15 text-moss' : 'border-line-2 text-muted hover:bg-panel-2 hover:text-moss'}`}>
+          🔊 ref calls
+        </button>
         {sp.items.length > 1 && (
           <div className="flex gap-1">
             <ArrowBtn onClick={() => scroll(-1)}>‹</ArrowBtn>
@@ -42,10 +48,16 @@ export function SpeciesRow({ sp }: { sp: SpeciesGroup }) {
         )}
       </header>
 
+      {refOpen && (
+        <div className="mb-2.5 overflow-hidden rounded-xl border border-line bg-base/20">
+          <ReferenceCalls species={sp.species} group={sp.group} refs={refs} />
+        </div>
+      )}
+
       <div ref={track} className="flex snap-x gap-3 overflow-x-auto pb-2">
         {sp.items.slice(0, CAP).map((d, i) => (
           <div key={d.id} className="w-[330px] shrink-0 snap-start">
-            <DetectionCard det={d} idx={i} />
+            <DetectionCard det={d} idx={i} hideRefs />
           </div>
         ))}
         {sp.items.length > CAP && (

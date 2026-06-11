@@ -6,7 +6,9 @@ import { ReferenceCalls } from './ReferenceCalls'
 
 const groupIcon: Record<string, string> = { bird: '🐦', frog: '🐸', insect: '🦗' }
 
-export function DetectionCard({ det, idx, refs }: { det: Detection; idx: number; refs?: ReferenceCall[] }) {
+export function DetectionCard({ det, idx, refs, hideRefs }: {
+  det: Detection; idx: number; refs?: ReferenceCall[]; hideRefs?: boolean
+}) {
   const [open, setOpen] = useState(false)
   const [refOpen, setRefOpen] = useState(false)
   const c = confColor(det.conf)
@@ -51,14 +53,14 @@ export function DetectionCard({ det, idx, refs }: { det: Detection; idx: number;
         >▶ Load spectrogram &amp; audio</button>
       )}
 
-      {refOpen ? (
+      {!hideRefs && (refOpen ? (
         <ReferenceCalls species={det.species} group={det.group} refs={refs} />
       ) : (
         <button
           onClick={() => setRefOpen(true)}
           className="w-full border-t border-line bg-base/30 py-2 text-[12px] font-medium text-muted transition hover:bg-panel-2 hover:text-moss"
         >🔊 Reference calls (compare ID)</button>
-      )}
+      ))}
     </article>
   )
 }

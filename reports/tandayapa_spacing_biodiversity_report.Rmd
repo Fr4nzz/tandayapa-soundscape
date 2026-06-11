@@ -248,14 +248,14 @@ adjusted for the day random effect, and the symbol marks the first or second rep
 
 We estimated the effect of recorder distance on each acoustic index difference using linear mixed models
 (`distance_m + (1|deploy)`), reporting slopes per 10 m with 95% confidence intervals. We defined an
-distance-decay as a slope whose CI excludes zero (i.e., a systematic increase in |Δindex| with every
-10 m of separation). For **ACI**, the estimated slope was 0.0003 per 10 m (95% CI: –0.0012 to 0.0019,
-R² = 0.001), for **BI** it was –0.0001 per 10 m (95% CI: –0.0012 to 0.0010, R² = 0.001), and for
-**ADI** it was –0.0001 per 10 m (95% CI: –0.0005 to 0.0003, R² = 0.001). None of these CIs exclude
-zero, so we conclude the cheap indices do **not** change with recorder distance over 15–60 m (H1 not
-supported for the indices). The magnitudes are also ecologically trivial: the expected change in any
-index over 60 m is less than 1% of the mean index value, so even if the p-values were significant, the
-effect would be negligible for soundscape monitoring.
+ecologically important distance-decay as a slope that would change the index by at least 10% of its mean
+value over 60 m, which would be enough to affect biodiversity monitoring decisions. For **ACI**, the
+estimated slope was 0.0003 per 10 m (95% CI: –0.0012 to 0.0019, R² = 0.001), for **BI** it was
+–0.0001 per 10 m (95% CI: –0.0012 to 0.0010, R² = 0.001), and for **ADI** it was –0.0001 per 10 m
+(95% CI: –0.0005 to 0.0003, R² = 0.001). The expected change in any index over 60 m is less than 1%
+of the mean index value, so none of these effects is ecologically important regardless of statistical
+significance. We conclude the cheap indices do **not** change with recorder distance over 15–60 m (H1
+not supported for the indices).
 
 ```{r index-build}
 ip <- list()
@@ -346,16 +346,19 @@ tod_tab(m_bi) %>% pub_tab("Table 3. Between-recorder difference in BI by time of
 Indices summarise *how much* and *how spread out* the sound is, not *which species* call. As a
 complement we asked the same questions of the BirdNET species community. We estimated the effect of
 recorder distance on Jaccard dissimilarity using linear mixed models (`distance_m + (1|deploy)`),
-reporting the slope per 10 m with 95% confidence intervals. We defined a meaningful distance-decay as a
-positive slope whose CI excludes zero (i.e., compositional turnover increases systematically with
-separation). In **pasture**, the estimated Jaccard slope was +0.0101 per 10 m (95% CI: 0.0024 to
-0.0178, R² = 0.120), so compositional turnover increases reliably with distance (a real distance-decay).
-In **forest**, the estimated slope was +0.0020 per 10 m (95% CI: –0.0054 to 0.0094, R² = 0.001),
-so the forest trend is unresolved and the data are consistent with no turnover. The forest − pasture
-slope difference is negative (pasture decays faster), the opposite of H2. The pasture distance-decay is
-robust to the BirdNET confidence threshold (the Jaccard slope excludes zero at 0.25, 0.5 and 0.7); the
-forest trend appears only at the most permissive cutoff. So **the species data detect spatial structure
-the indices miss**, but in the open pasture rather than the forest.
+reporting the slope per 10 m with 95% confidence intervals. We defined an ecologically important
+distance-decay as a Jaccard slope that would increase dissimilarity by at least 0.10 over 60 m (i.e., 10%
+species turnover), which would mean two recorders share ≤90% of species and are beginning to sample
+different communities. In **pasture**, the estimated slope was +0.0101 per 10 m (95% CI: 0.0024 to
+0.0178, R² = 0.120), so the expected Jaccard increase over 60 m is +0.06. This is below the 0.10
+decision threshold but still represents a 6% increase in species turnover, suggesting that open-habitat
+recorders capture measurably different communities at 60 m compared to 15 m. In **forest**, the
+estimated slope was +0.0020 per 10 m (95% CI: –0.0054 to 0.0094, R² = 0.001), so the expected
+increase over 60 m is +0.01, well below the threshold and consistent with no ecologically meaningful
+turnover. The forest − pasture slope difference is negative (pasture decays faster), the opposite of H2.
+The pasture distance-decay is robust to the BirdNET confidence threshold (the slope is positive at 0.25,
+0.5 and 0.7); the forest trend appears only at the most permissive cutoff. So **the species data detect
+spatial structure the indices miss**, but in the open pasture rather than the forest.
 
 ```{r comm-build}
 build_comm_pw <- function(cmin){

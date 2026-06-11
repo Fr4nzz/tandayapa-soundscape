@@ -238,8 +238,6 @@ tibble(Model = c("Additive (Distance + Habitat)", "Interactive (Distance × Habi
 
 The interactive model is chosen because it directly tests whether distance and habitat interact — that is, whether the distance slope differs between forest and pasture (H2). The additive model assumes the same distance slope in both habitats, which would miss the ecological contrast we are looking for. The raw indices are used in the time-of-day model (Table 3), where each recorder contributes its own value; the pairwise difference is only needed for the distance-decay question.
 
-```
-
 # Results
 
 ## Acoustic indices and recorder distance

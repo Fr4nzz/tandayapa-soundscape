@@ -181,12 +181,29 @@ function sectionLabel(slide, x, y, txt) {
 
 // 8 Analysis
 {
- const s=pptx.addSlide(); slideBase(s,{num:8}); title(s,'Data analysis','We treated recorder pairs as the unit of spatial comparison.');
- card(s,0.7,1.45,3.8,4.55,'1 · Pairwise differences','For every within-habitat pair, calculate how different two recorders were in acoustic indices or species composition.',{bodySize:12.8});
- card(s,4.83,1.45,3.8,4.55,'2 · Mixed models','Distance model: response ~ distance + (1|deployment day). Time model also includes recorder pair.',{bodySize:12.8,accentColor:C.forest});
- card(s,8.96,1.45,3.8,4.55,'3 · Effect-size logic','Report slope per 10 m + 95% CI. Ecological threshold for Jaccard: ≥0.10 turnover over 60 m.',{bodySize:12.8});
- s.addText('Detectable ≠ important: we judged importance by magnitude, not just whether CI excluded zero.', {x:0.95,y:6.45,w:11.45,h:0.35,fontSize:15.3,bold:true,color:C.white,align:'center',margin:0});
- notes(s, 'Franz', 55, 'The analysis used recorder pairs, because our question is about how different two recorders are from each other. For each pair within a habitat, we calculated differences in acoustic indices and dissimilarity in species composition. We used linear mixed models with deployment day as a random effect. Importantly, we report slopes and confidence intervals, and we separate detectable effects from effects that are large enough to matter ecologically.');
+ const s=pptx.addSlide(); slideBase(s,{num:8}); title(s,'Data analysis','Effect sizes show how large the difference is — not just whether it is detectable.');
+ s.addShape(pptx.ShapeType.roundRect,{x:0.75,y:1.35,w:5.55,h:4.75,rectRadius:0.18,fill:{color:C.cream},line:{color:C.cream}});
+ s.addText('Why report effect sizes?', {x:1.08,y:1.72,w:4.75,h:0.35,fontSize:20,bold:true,color:C.forest,margin:0});
+ s.addText([
+   {text:'Linear mixed models report ', options:{}},
+   {text:'slope ± 95% CI', options:{bold:true}},
+   {text:'\n', options:{breakLine:true}},
+   {text:'Size and direction of an effect are more informative than significance, especially in a small study', options:{breakLine:true}},
+   {text:'Detectable ≠ ecologically meaningful: we judge importance by magnitude', options:{breakLine:true}},
+ ], {x:1.12,y:2.35,w:4.65,h:2.35,fontSize:15.2,color:C.ink,breakLine:false,fit:'shrink',margin:0.02,paraSpaceAfterPt:10});
+ s.addShape(pptx.ShapeType.roundRect,{x:1.12,y:5.12,w:4.55,h:0.55,rectRadius:0.08,fill:{color:C.pasture},line:{color:C.pasture}});
+ s.addText('Example threshold: Jaccard ≥ 0.10 over 60 m', {x:1.25,y:5.27,w:4.3,h:0.18,fontSize:11.8,bold:true,color:C.ink,align:'center',margin:0});
+ 
+ s.addShape(pptx.ShapeType.roundRect,{x:6.75,y:1.35,w:5.85,h:4.75,rectRadius:0.18,fill:{color:C.cream},line:{color:C.cream}});
+ s.addText('Two complementary models', {x:7.08,y:1.72,w:4.95,h:0.35,fontSize:20,bold:true,color:C.forest,margin:0});
+ s.addText('Distance model', {x:7.12,y:2.34,w:2.0,h:0.24,fontSize:14,bold:true,color:C.forest,margin:0});
+ s.addText('|Δ metric| ~ distance + (1 | day)', {x:7.12,y:2.72,w:5.05,h:0.25,fontFace:'Aptos Mono',fontSize:13.5,bold:true,color:C.ink,margin:0,fit:'shrink'});
+ s.addText('One value per recorder pair', {x:7.12,y:3.08,w:4.9,h:0.22,fontSize:12.5,color:C.ink,margin:0});
+ s.addText('Time-of-day model', {x:7.12,y:3.62,w:2.35,h:0.24,fontSize:14,bold:true,color:C.forest,margin:0});
+ s.addText('difference ~ time of day + (1 | pair) + (1 | day)', {x:7.12,y:4.00,w:5.05,h:0.25,fontFace:'Aptos Mono',fontSize:12.3,bold:true,color:C.ink,margin:0,fit:'shrink'});
+ s.addText('Additive vs interactive models compared with AIC: does the distance slope differ between habitats?', {x:7.12,y:4.62,w:5.0,h:0.62,fontSize:13.2,bold:true,color:C.ink,margin:0,fit:'shrink'});
+ s.addText('Pairwise response = acoustic-index difference or BirdNET community dissimilarity.', {x:0.95,y:6.52,w:11.45,h:0.32,fontSize:14.8,bold:true,color:C.white,align:'center',margin:0});
+ notes(s, 'Franz', 60, 'For the analysis, we used linear mixed models, but we focused on effect sizes rather than only p-values. That means we report the slope and its 95 percent confidence interval, because the size and direction of an effect are more informative, especially in a small field study. We used two complementary models: a distance model, where the response is the difference between a pair of recorders, and a time-of-day model that accounts for recorder pair and deployment day. We also compared additive and interactive models with AIC to ask whether the distance slope differs between habitats.');
 }
 
 // 9 indices vs distance

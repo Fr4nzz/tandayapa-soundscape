@@ -1,0 +1,12 @@
+{
+  "name": "tandayapa-soundscape",
+  "version": "1.0.0",
+  "description": "Passive acoustic monitoring (AudioMoth) at Tandayapa Cloud Forest Station, Ecuador.",
+  "private": true,
+  "scripts": {
+    "build:presentation": "node reports/create_tandayapa_presentation.js"
+  },
+  "dependencies": {
+    "pptxgenjs": "^4.0.1"
+  }
+}

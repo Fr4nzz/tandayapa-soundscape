@@ -33,6 +33,7 @@ CONFIG.TXT
 !/outputs/analysis/*.png
 
 # --- Web app build + deps (run `npm install` / `npm run build`) ---------------
+/node_modules/
 /webapp/node_modules/
 /webapp/dist/
 
